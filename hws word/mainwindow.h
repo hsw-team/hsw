@@ -10,9 +10,13 @@
 #include <QString>
 #include <QMessageBox>
 #include <QSize>
+#include <QPlainTextEdit>
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
+    QPlainTextEdit *textedit;
 
     QMenu *File;
     QMenu *Edit;
@@ -39,7 +43,7 @@ public:
     ~MainWindow();
 
 protected:
-    void closeEvent();
+    void closeEvent(QCloseEvent);
 };
 
 #endif // MAINWINDOW_H

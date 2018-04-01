@@ -28,6 +28,7 @@ SOURCES += \
         mainwindow.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    document.h
 
 RC_FILE=images/logo.rc

@@ -1,5 +1,21 @@
 #include "mainwindow.h"
+#include "document.h"
 #include <qDebug>
+
+//==========================================================
+// = 基本完成项：
+//     -- 图标的加入
+//     -- 菜单栏的设置(具体功能待完成)
+//     -- 窗体程序框架
+//     --
+//     --
+// = Todo：
+//     -- 内部数据的实现
+//     -- 如何在主界面显示Document对象的文本
+//     -- 光标如何显示
+//     -- 粘贴，插入，删除操作
+//     -- 文字块编辑
+//==========================================================
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -7,7 +23,21 @@ MainWindow::MainWindow(QWidget *parent)
     this->resize(QSize(1024,768));
     CreateMenu();
 
+    //调用控件，仅试用
+    /*
+    textedit = new QPlainTextEdit;
+    setCentralWidget(textedit);
+    */
 
+    //申明一个Document对象
+    //读入Hello World!
+    //并从控制台输出Document的内容
+    /*
+    Document M;
+    char a[20]={"Hello World!"};
+    M.first_row->edit(a);
+    M.show_doc();
+    */
 }
 
 void MainWindow::CreateMenu()
@@ -67,7 +97,8 @@ void MainWindow::Open_File()
         QString file_suffix = file_info.suffix();
         if(file_suffix=="txt"){
             qDebug()<<file_name<<endl<<file_suffix;
-            //载入文件
+
+            //Todo 载入文件
 
         }
     }
@@ -80,7 +111,7 @@ void MainWindow::Open_File()
 // 查找文本 函数
 void MainWindow::Find_Text()
 {
-
+    //Todo
 }
 
 // 显示 Help 函数
@@ -97,8 +128,11 @@ void MainWindow::Show_About()
 }
 
 // 主窗口关闭 函数
-void MainWindow::closeEvent()
+void MainWindow::closeEvent(QCloseEvent)
 {
+
+    //Todo
+
     const QMessageBox::StandardButton ret
         = QMessageBox::warning(this, tr("Application"),
                                tr("还差文件保存判断!"),

@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->resize(QSize(1024,768));
     CreateMenu();
+    ColorSelect();
+    update();
 
     //调用控件，仅试用
     /*
@@ -42,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::CreateMenu()
 {
-// File 菜单栏
+    // File 菜单栏
     File = menuBar()->addMenu(tr("File"));
     File_New = new QAction(tr("新建"),this);
     File_New->setShortcut(QKeySequence::New);
@@ -56,7 +58,7 @@ void MainWindow::CreateMenu()
     File->addAction(File_Save);
 
 
-// Edit 菜单栏
+    // Edit 菜单栏
     Edit = menuBar()->addMenu(tr("Edit"));
     Edit_Search=new QAction(tr("查找文本"),this);
     Edit_Search->setShortcut(QKeySequence::Find);
@@ -64,20 +66,20 @@ void MainWindow::CreateMenu()
     Edit->addAction(Edit_Search);
 
 
-// Help 菜单栏
+    // Help 菜单栏
     Help = menuBar()->addMenu(tr("Help"));
     Help_Help=new QAction(tr("帮助文档"),this);
 
     Help->addAction(Help_Help);
 
 
-// About 菜单栏
+    // About 菜单栏
     About = menuBar()->addMenu(tr("About"));
     About_About=new QAction(tr("关于软件"),this);
 
     About->addAction(About_About);
 
-//动作 connect
+    //动作 connect
     connect(File_Open,SIGNAL(triggered(bool)),this,SLOT(Open_File()));
     /*
     connect(this->,SIGNAL(triggered(bool)),this,SLOT());*/
@@ -103,7 +105,7 @@ void MainWindow::Open_File()
         }
     }
     else{
-    //未选中文件
+        //未选中文件
         qDebug()<<"未选中文件";
     }
 }
@@ -124,7 +126,7 @@ void MainWindow::Show_Help()
 void MainWindow::Show_About()
 {
     QMessageBox::about(this,tr("关于 MiniWord"),tr("欢迎您的使用!\n"
-                                                "此程序 MiniWord 由 Daoxu Sheng, Weiran Huang\n 以及 Zengrui Wang 共同开发完成。"));
+                                                 "此程序 MiniWord 由 Daoxu Sheng, Weiran Huang\n 以及 Zengrui Wang 共同开发完成。"));
 }
 
 // 主窗口关闭 函数
@@ -134,9 +136,9 @@ void MainWindow::closeEvent(QCloseEvent)
     //Todo
 
     const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, tr("Application"),
-                               tr("还差文件保存判断!"),
-                               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+            = QMessageBox::warning(this, tr("Application"),
+                                   tr("还差文件保存判断!"),
+                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
     switch (ret) {
     case QMessageBox::Save:
         qDebug()<<"Save";   break;
@@ -149,6 +151,54 @@ void MainWindow::closeEvent(QCloseEvent)
     }
 }
 
+void MainWindow::ColorSelect()//颜色控制
+{
+    pal.setColor(QPalette::Background,Qt::white);
+    setStyleSheet(""
+                  "QMenuBar{"
+                  "background-color:#f0f0f0}"
+                  "");
+    setAutoFillBackground(true);
+    setPalette(pal);
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
+{
+    string n;//先临时用string试验一下
+    n = ev->key();
+    if(n == "\u0004")//输入为回车
+    {
+        n = "\n";
+        sentence.append(n);
+    }
+    else if(n == "\u0003" && sentence.size()>0)//输入为退格且当前字符串大小大于0，删掉最后一个字符
+        sentence.resize(sentence.size()-1);
+    else if(n == "\u0003" && sentence.size()==0);//输入为退格且当前字符串大小为0，无操作
+    else
+        sentence.append(n);
+    qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
+    qDebug() << qsentence;
+    update();
+}
+//void MainWindow::mousePressEvent(QMouseEvent *event)
+//{
+//    if(event->button()==Qt::LeftButton) //鼠标左键按下
+
+//        qDebug() <<
+// event->pos();
+//}
+void MainWindow::paintEvent(QPaintEvent *event)
+{
+
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    QRect rc(100, 100, 800, 800);//在一个700x700的矩形框内输入文字(实验)
+    // 设置画笔颜色
+    painter.setPen(QColor(0, 160, 230));//画笔颜色
+
+    painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);
+}
 MainWindow::~MainWindow()
 {
 

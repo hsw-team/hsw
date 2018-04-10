@@ -71,6 +71,7 @@ class Document {
 public:
     Row *first_row;
     Row *cur_row;
+    Row *pre_row;
 
     Document();
     void add_row(Row *r);
@@ -84,11 +85,16 @@ Document::Document()
     qDebug() << " Document 构造函数\n";
     this->first_row = new Row;
     this->cur_row = this->first_row;
+    this->pre_row = this->first_row;
 }
 void Document::add_row(Row *r)
 {
     Row *tmp = new Row;
     r->Next_Row = tmp;
+    this->pre_row = r;
+    r = r->Next_Row;
+    this->cur_row = r;
+
 }
 void Document::show_doc()
 {

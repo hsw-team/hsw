@@ -31,4 +31,4 @@ HEADERS += \
         mainwindow.h \
     document.h
 
-RC_FILE=images/logo.rc
+#RC_FILE=images/logo.rc

@@ -58,9 +58,11 @@ void Row::edit(char *s)
     }
     if (this->cur_len == 0) {
         strcpy(this->row_text, s);
+        this->cur_len += s_len;
     }
     else {
         strcat(this->row_text, s);
+        this->cur_len += s_len;
     }
 }
 

@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "document.h"
 #include <qDebug>
-
+Document dataa;
 //==========================================================
 // = 基本完成项：
 //     -- 图标的加入
@@ -164,19 +164,31 @@ void MainWindow::ColorSelect()//颜色控制
 
 void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
 {
-    string n;//先临时用string试验一下
+    char n1[10];//先临时用string试验一下
+    string n ;
     n = ev->key();
     if(n == "\u0004")//输入为回车
     {
         n = "\n";
-        sentence.append(n);
+        strcpy(n1,n.c_str());
+        dataa.cur_row->edit(n1);
+        //sentence.append(n);
     }
-    else if(n == "\u0003" && sentence.size()>0)//输入为退格且当前字符串大小大于0，删掉最后一个字符
-        sentence.resize(sentence.size()-1);
-    else if(n == "\u0003" && sentence.size()==0);//输入为退格且当前字符串大小为0，无操作
+    else if(n == "\u0003" && dataa.cur_row->cur_len>0)//输入为退格且当前字符串大小大于0，删掉最后一个字符
+    {
+        dataa.cur_row->row_text[dataa.cur_row->cur_len - 1] = '\0';
+        dataa.cur_row->cur_len--;
+    }
+        //sentence.resize(sentence.size()-1);
+    else if(n == "\u0003" && dataa.cur_row->cur_len==0);//输入为退格且当前字符串大小为0，无操作
     else
-        sentence.append(n);
-    qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
+    {
+        strcpy(n1,n.c_str());
+        dataa.cur_row->edit(n1);
+    }
+        //sentence.append(n);
+    //qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
+    qsentence = QString("%1").arg(dataa.cur_row->row_text);
     qDebug() << qsentence;
     update();
 }

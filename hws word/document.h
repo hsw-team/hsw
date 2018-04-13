@@ -6,6 +6,8 @@
 #include <string>
 #include <cstdlib>
 #include <QDebug>
+#include <QString>
+#include <QFile>
 
 //==========================================================
 // =大体结构：
@@ -32,32 +34,35 @@ public:
     void add_block();
     void edit(char *s);
 };
+//=================文档光标================
+class Cursor {
+public:
+    Row *hang;
+    int col;
+};
 
 //=================整个文档================
 class Document {
 public:
     Row *first_row;
     Row *cur_row;
+    Cursor cursor;
 
     Document();
     void add_row(Row *r);
-    void input();
     void read_file(char *file);
+    void save_file(char *file);
     void show_doc();
-
-};
-
-//=================文档光标================
-class cursor {
-public:
-    Row *hang;
-    int col;
-
-    cursor();
     void cursor_left();
     void cursor_right();
     void cursor_up();
     void cursor_down();
-}
+    void cursor_home();
+    void cursor_end();
+
+};
+
+
+
 
 #endif // DOCUMENT_H

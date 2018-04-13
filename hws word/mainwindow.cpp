@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-//#include "document.h"
 #include <qDebug>
 
 //==========================================================
@@ -100,8 +99,17 @@ void MainWindow::Open_File()
         if(file_suffix=="txt"){
             qDebug()<<file_name<<endl<<file_suffix;
 
-            //Todo 载入文件
-
+            //载入文件
+            string str = file_name.toStdString();
+            //datta.read_file(char*)(str.c_str());
+            this->dataa.read_file((char*)str.c_str());
+            Row *temp = dataa.first_row;
+            qsentence = "";
+            while(temp)
+            {
+                qsentence.append(temp->row_text);
+                temp = temp->Next_Row;
+            }
         }
     }
     else{
@@ -165,7 +173,7 @@ void MainWindow::ColorSelect()//颜色控制
 void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
 {
     char n1[10];
-    string n ;
+    string n;
     n = ev->key();
     if(n == "\u0004")//输入为回车
     {
@@ -173,13 +181,15 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         strcpy(n1,n.c_str());
         dataa.cur_row->edit(n1);
         dataa.add_row(dataa.cur_row);
-        //sentence.append(n);
+        dataa.cursor.hang = dataa.cur_row;
+        dataa.cursor.col = 0;
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
         if(dataa.cur_row->cur_len > 0)
         {
             dataa.cur_row->row_text[--dataa.cur_row->cur_len] = '\0';
+            dataa.cursor.col--;
         }
         else if(dataa.cur_row->cur_len == 0 && dataa.cur_row != dataa.first_row)
         {
@@ -192,14 +202,27 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
             delete temp;
             //现在cur_row指向的就是前一行,然后还需要删掉上一行的'\n'符号。
             dataa.cur_row->row_text[--dataa.cur_row->cur_len] = '\0';
+            dataa.cursor.hang = dataa.cur_row;
+            dataa.cursor.col = dataa.cur_row->cur_len;
         }
     }
-        //sentence.resize(sentence.size()-1);
-    //else if(n == "\u0003" && dataa.cur_row->cur_len==0);//输入为退格且当前字符串大小为0，无操作
+    else if(n=="\u0012"){//左
+        dataa.cursor_left();
+    }
+    else if(n=="\u0013"){//上
+        dataa.cursor_up();
+    }
+    else if(n=="\u0014"){//右
+        dataa.cursor_right();
+    }
+    else if (n=="\u0015"){//下
+        dataa.cursor_down();
+    }
     else
     {
         strcpy(n1,n.c_str());
         dataa.cur_row->edit(n1);
+        dataa.cursor.col += strlen(n1);
     }
         //sentence.append(n);
     //qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
@@ -211,6 +234,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         temp = temp->Next_Row;
     }
     qDebug() << qsentence;
+
+    qDebug() << "Ccccursorrrr hang：" << dataa.cursor.hang;
+    qDebug() << "Ccccursorrrr column：" << dataa.cursor.col;
+
     update();
 }
 //void MainWindow::mousePressEvent(QMouseEvent *event)

@@ -11,7 +11,6 @@
 #include <QString>
 #include <QMessageBox>
 #include <QSize>
-#include <QPlainTextEdit>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
@@ -23,7 +22,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    QPlainTextEdit *textedit;
+    //QPlainTextEdit *textedit;
     QPalette pal;
     QMenu *File;
     QMenu *Edit;

@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "document.h"
+//#include "document.h"
 #include <qDebug>
 
 //==========================================================
@@ -10,8 +10,8 @@
 //     --
 //     --
 // = Todo：
-//     -- 内部数据的实现√
-//     -- 如何在主界面显示Document对象的文本√
+//     -- 内部数据的实现
+//     -- 如何在主界面显示Document对象的文本
 //     -- 光标如何显示
 //     -- 粘贴，插入，删除操作
 //     -- 文字块编辑
@@ -130,7 +130,7 @@ void MainWindow::Show_About()
 }
 
 // 主窗口关闭 函数
-void MainWindow::closeEvent(QCloseEvent)
+void MainWindow::closeEvent(QCloseEvent *event)
 {
 
     //Todo
@@ -171,41 +171,39 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     {
         n = "\n";
         strcpy(n1,n.c_str());
-        sentence.cur_row->edit(n1);
-        sentence.add_row(sentence.cur_row);
+        dataa.cur_row->edit(n1);
+        dataa.add_row(dataa.cur_row);
         //sentence.append(n);
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
-        if(sentence.cur_row->cur_len > 0)
+        if(dataa.cur_row->cur_len > 0)
         {
-            sentence.cur_row->row_text[sentence.cur_row->cur_len - 1] = '\0';
-            sentence.cur_row->cur_len--;
+            dataa.cur_row->row_text[--dataa.cur_row->cur_len] = '\0';
         }
-        else if(sentence.cur_row->cur_len == 0 && sentence.cur_row != sentence.first_row)
+        else if(dataa.cur_row->cur_len == 0 && dataa.cur_row != dataa.first_row)
         {
-            Row *temp = sentence.first_row;
-            while(temp->Next_Row != NULL && temp->Next_Row != sentence.pre_row)
-            {
-                temp = temp->Next_Row;
+            Row *temp = dataa.cur_row;
+            dataa.cur_row = temp->Prev_Row;
+            if(temp->Next_Row){
+                temp->Next_Row->Prev_Row = dataa.cur_row;
             }
-            sentence.cur_row = sentence.pre_row;
-            sentence.pre_row = temp;
-            sentence.cur_row->Next_Row = NULL;
+            dataa.cur_row->Next_Row = temp->Next_Row;
+            delete temp;
+            //现在cur_row指向的就是前一行,然后还需要删掉上一行的'\n'符号。
+            dataa.cur_row->row_text[--dataa.cur_row->cur_len] = '\0';
         }
     }
         //sentence.resize(sentence.size()-1);
     //else if(n == "\u0003" && dataa.cur_row->cur_len==0);//输入为退格且当前字符串大小为0，无操作
     else
     {
-
         strcpy(n1,n.c_str());
-        sentence.cur_row->edit(n1);
+        dataa.cur_row->edit(n1);
     }
         //sentence.append(n);
     //qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
-    qDebug() << sentence.cur_row->cur_len <<sentence.cur_row->max_len;
-    Row *temp = sentence.first_row;
+    Row *temp = dataa.first_row;
     qsentence = "";
     while(temp)
     {

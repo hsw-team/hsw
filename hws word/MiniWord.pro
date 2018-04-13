@@ -30,6 +30,6 @@ SOURCES += \
 
 HEADERS += \
         mainwindow.h \
-    document.h
+        document.h
 
 #RC_FILE=images/logo.rc

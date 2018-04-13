@@ -17,7 +17,6 @@
 #include <QPen>
 #include "document.h"
 
-
 using namespace std;
 
 class MainWindow : public QMainWindow
@@ -38,8 +37,7 @@ class MainWindow : public QMainWindow
     QAction *About_About;
     QAction *Help_Help;
 
-    Document sentence;
-    //string sentence;
+    string sentence;
     QString qsentence;
 
     void CreateMenu();
@@ -55,11 +53,12 @@ private slots:
     //void mousePressEvent(QMouseEvent *event);
 
 public:
+    Document dataa;
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
 protected:
-    void closeEvent(QCloseEvent);
+    void closeEvent(QCloseEvent *event);
 };
 
 #endif // MAINWINDOW_H

@@ -5,6 +5,7 @@ Row::Row()
     qDebug() << " Row 构造函数\n";
     this->row_text = (char*)calloc(1, sizeof(char) * 100);
     this->Next_Row = NULL;
+    this->Prev_Row = NULL;
     this->cur_len = 0;
     this->max_len = 100;
 
@@ -33,21 +34,25 @@ void Row::edit(char *s)
         strcat(this->row_text, s);
         this->cur_len += s_len;
     }
-
 }
+
+
+//=========================================================================================
 
 Document::Document()
 {
     qDebug() << " Document 构造函数\n";
     this->first_row = new Row;
     this->cur_row = this->first_row;
-    this->pre_row = this->first_row;
+    //this->pre_row = this->first_row;
+    this->first_row->Prev_Row = first_row;
 }
 void Document::add_row(Row *r)
 {
     Row *tmp = new Row;
+    tmp->Prev_Row = r;
+    tmp->Next_Row = r->Next_Row;
     r->Next_Row = tmp;
-    this->pre_row = r;
     r = r->Next_Row;
     this->cur_row = r;
 
@@ -88,5 +93,3 @@ void Document::read_file(char *s)
         cur_row = cur_row->Next_Row;
     }
 }*/
-
-

@@ -26,19 +26,18 @@ public:
     char *row_text;
 
     Row *Next_Row;
+    Row *Prev_Row;
 
     Row();
     void add_block();
     void edit(char *s);
 };
 
-
 //=================整个文档================
 class Document {
 public:
     Row *first_row;
     Row *cur_row;
-    Row *pre_row;
 
     Document();
     void add_row(Row *r);
@@ -47,4 +46,5 @@ public:
     void show_doc();
 
 };
+
 #endif // DOCUMENT_H

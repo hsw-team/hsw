@@ -47,4 +47,17 @@ public:
 
 };
 
+//=================文档光标================
+class cursor {
+public:
+    Row *hang;
+    int col;
+
+    cursor();
+    void cursor_left();
+    void cursor_right();
+    void cursor_up();
+    void cursor_down();
+}
+
 #endif // DOCUMENT_H

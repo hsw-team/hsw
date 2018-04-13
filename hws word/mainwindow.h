@@ -15,6 +15,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include "document.h"
 
 
 using namespace std;
@@ -37,7 +38,8 @@ class MainWindow : public QMainWindow
     QAction *About_About;
     QAction *Help_Help;
 
-    string sentence;
+    Document sentence;
+    //string sentence;
     QString qsentence;
 
     void CreateMenu();

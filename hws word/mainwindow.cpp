@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "document.h"
+#include <windows.h>
 #include <qDebug>
-
 //==========================================================
 // = 基本完成项：
 //     -- 图标的加入
@@ -21,10 +21,12 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     this->resize(QSize(1024,768));
+
     CreateMenu();
     ColorSelect();
     update();
-
+//    connect(timer,SIGNAL(timeout()),this,SLOT(update()));
+//    timer->start(1000);
     //调用控件，仅试用
     /*
     textedit = new QPlainTextEdit;
@@ -167,13 +169,44 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     char n1[10];
     string n ;
     n = ev->key();
-    if(n == "\u0004")//输入为回车
+    if(ev->key() == Qt::Key_CapsLock)
+    {
+        if(caps == true)
+            caps = false;
+        else
+            caps = true;
+    }
+    else if(ev->key() == Qt::Key_Shift);
+    else if((ev->key() <= Qt::Key_Z && ev->key() >= Qt::Key_A) && ev->modifiers() == Qt::ShiftModifier)
+    {
+        if(caps == true)
+        {
+            transform(n.begin(),n.end(),n.begin(),::tolower);
+            strcpy(n1,n.c_str());
+            sentence.cur_row->edit(n1);
+        }
+        else
+        {
+            transform(n.begin(),n.end(),n.begin(),::toupper);
+            strcpy(n1,n.c_str());
+            sentence.cur_row->edit(n1);
+        }
+    }
+
+    else if(n == "\u0004")//输入为回车
     {
         n = "\n";
         strcpy(n1,n.c_str());
         sentence.cur_row->edit(n1);
         sentence.add_row(sentence.cur_row);
         //sentence.append(n);
+    }
+    else if(n == "\u0001")//输入为TAB
+    {
+        n = "    ";
+        strcpy(n1,n.c_str());
+        sentence.cur_row->edit(n1);
+        sentence.add_row(sentence.cur_row);
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
@@ -194,16 +227,13 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
             sentence.cur_row->Next_Row = NULL;
         }
     }
-        //sentence.resize(sentence.size()-1);
-    //else if(n == "\u0003" && dataa.cur_row->cur_len==0);//输入为退格且当前字符串大小为0，无操作
     else
     {
-
+        if(caps == false)
+                transform(n.begin(),n.end(),n.begin(),::tolower);
         strcpy(n1,n.c_str());
         sentence.cur_row->edit(n1);
     }
-        //sentence.append(n);
-    //qsentence = QString::fromStdString(sentence);//将string转为QString，试验一下，如果允许这样的话回车换行就很方便了，不行的话再另说
     qDebug() << sentence.cur_row->cur_len <<sentence.cur_row->max_len;
     Row *temp = sentence.first_row;
     qsentence = "";
@@ -226,14 +256,21 @@ void MainWindow::paintEvent(QPaintEvent *event)
 {
 
     Q_UNUSED(event);
-
     QPainter painter(this);
+    QPixmap textcursor;
+    QTime time = QTime::currentTime();
     QRect rc(100, 100, 800, 800);//在一个700x700的矩形框内输入文字(实验)
-    // 设置画笔颜色
-    painter.setPen(QColor(0, 160, 230));//画笔颜色
-
-    painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);
+    QFont font;
+    font.setPixelSize(26);//设置字号
+    painter.setFont(font);//设置字体
+    painter.setPen(QColor(0, 0, 0));//画笔颜色
+    painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);//绘制文字
+    textcursor.load(":/image/cursor.png");
+    if(time.second()%2 == 0)
+        painter.drawPixmap(30,30,textcursor);
+    update();
 }
+
 MainWindow::~MainWindow()
 {
 

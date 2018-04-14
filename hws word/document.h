@@ -29,6 +29,7 @@ public:
 
     Row();
     void add_block();
+    //void append(char s);
     void edit(char *s);
 };
 

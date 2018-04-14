@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <iostream>
+#include <algorithm>
+#include <QEvent>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
@@ -15,6 +17,10 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include <QTime>
+#include <QTimer>
+#include <QThread>
+#include <windows.h>
 #include "document.h"
 
 
@@ -38,8 +44,8 @@ class MainWindow : public QMainWindow
     QAction *About_About;
     QAction *Help_Help;
 
+    bool caps = false;
     Document sentence;
-    //string sentence;
     QString qsentence;
 
     void CreateMenu();
@@ -61,5 +67,12 @@ public:
 protected:
     void closeEvent(QCloseEvent);
 };
+
+//class MyThread : public QThread {
+//    Q_OBJECT
+//    private slots:
+//        virtual void run();
+//    };
+
 
 #endif // MAINWINDOW_H

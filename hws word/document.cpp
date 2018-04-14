@@ -17,6 +17,24 @@ void Row::add_block()
 
     this->max_len += 100;
 }
+
+//void Row::append(char s)
+//{
+//    qDebug() << "调用 append()\n";
+//    if((this->max_len - this->cur_len) <= 1) {
+//        this->add_block();
+//        qDebug() << "append()增加空间\n";
+//    }
+//    if (this->cur_len == 0) {
+//        strcpy(this->row_text, &s);
+//        this->cur_len++;
+//    }
+//    else {
+//        strcat(this->row_text, &s);
+//        this->cur_len++;
+//    }
+//}
+
 void Row::edit(char *s)
 {
     qDebug() << "调用 edit()\n";
@@ -33,7 +51,6 @@ void Row::edit(char *s)
         strcat(this->row_text, s);
         this->cur_len += s_len;
     }
-
 }
 
 Document::Document()

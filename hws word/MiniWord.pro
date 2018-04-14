@@ -33,3 +33,6 @@ HEADERS += \
     document.h
 
 #RC_FILE=images/logo.rc
+
+RESOURCES += \
+    image.qrc

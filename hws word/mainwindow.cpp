@@ -102,8 +102,17 @@ void MainWindow::Open_File()
         if(file_suffix=="txt"){
             qDebug()<<file_name<<endl<<file_suffix;
 
-            //Todo 载入文件
-
+            //载入文件
+            string str = file_name.toStdString();
+            //datta.read_file(char*)(str.c_str());
+            this->sentence.read_file((char*)str.c_str());
+            Row *temp = sentence.first_row;
+            qsentence = "";
+            while(temp)
+            {
+                qsentence.append(temp->row_text);
+                temp = temp->Next_Row;
+            }
         }
     }
     else{
@@ -169,15 +178,15 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     char n1[10];
     string n ;
     n = ev->key();
-    if(ev->key() == Qt::Key_CapsLock)
+    if(ev->key() == Qt::Key_CapsLock)//大小写切换
     {
         if(caps == true)
             caps = false;
         else
             caps = true;
     }
-    else if(ev->key() == Qt::Key_Shift);
-    else if((ev->key() <= Qt::Key_Z && ev->key() >= Qt::Key_A) && ev->modifiers() == Qt::ShiftModifier)
+    else if(ev->key() == Qt::Key_Shift);//单独按shift
+    else if((ev->key() <= Qt::Key_Z && ev->key() >= Qt::Key_A) && ev->modifiers() == Qt::ShiftModifier)//按住shift的大小写切换
     {
         if(caps == true)
         {
@@ -199,7 +208,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         strcpy(n1,n.c_str());
         sentence.cur_row->edit(n1);
         sentence.add_row(sentence.cur_row);
-        //sentence.append(n);
+        sentence.cursor.hang = sentence.cur_row;
+        sentence.cursor.col = 0;
     }
     else if(n == "\u0001")//输入为TAB
     {
@@ -212,20 +222,35 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     {
         if(sentence.cur_row->cur_len > 0)
         {
-            sentence.cur_row->row_text[sentence.cur_row->cur_len - 1] = '\0';
-            sentence.cur_row->cur_len--;
+            sentence.cur_row->row_text[--sentence.cur_row->cur_len] = '\0';
+            sentence.cursor.col--;
         }
         else if(sentence.cur_row->cur_len == 0 && sentence.cur_row != sentence.first_row)
         {
-            Row *temp = sentence.first_row;
-            while(temp->Next_Row != NULL && temp->Next_Row != sentence.pre_row)
-            {
-                temp = temp->Next_Row;
+            Row *temp = sentence.cur_row;
+            sentence.cur_row = temp->Prev_Row;
+            if(temp->Next_Row){
+                temp->Next_Row->Prev_Row = sentence.cur_row;
             }
-            sentence.cur_row = sentence.pre_row;
-            sentence.pre_row = temp;
-            sentence.cur_row->Next_Row = NULL;
+            sentence.cur_row->Next_Row = temp->Next_Row;
+            delete temp;
+            //现在cur_row指向的就是前一行,然后还需要删掉上一行的'\n'符号。
+            sentence.cur_row->row_text[--sentence.cur_row->cur_len] = '\0';
+            sentence.cursor.hang = sentence.cur_row;
+            sentence.cursor.col = sentence.cur_row->cur_len;
         }
+    }
+    else if(n=="\u0012"){//左
+        sentence.cursor_left();
+    }
+    else if(n=="\u0013"){//上
+        sentence.cursor_up();
+    }
+    else if(n=="\u0014"){//右
+        sentence.cursor_right();
+    }
+    else if (n=="\u0015"){//下
+        sentence.cursor_down();
     }
     else
     {
@@ -233,6 +258,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
                 transform(n.begin(),n.end(),n.begin(),::tolower);
         strcpy(n1,n.c_str());
         sentence.cur_row->edit(n1);
+        sentence.cursor.col += strlen(n1);
     }
     qDebug() << sentence.cur_row->cur_len <<sentence.cur_row->max_len;
     Row *temp = sentence.first_row;
@@ -243,6 +269,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         temp = temp->Next_Row;
     }
     qDebug() << qsentence;
+
+    qDebug() << "Ccccursorrrr hang：" << sentence.cursor.hang;
+    qDebug() << "Ccccursorrrr column：" << sentence.cursor.col;
+
     update();
 }
 //void MainWindow::mousePressEvent(QMouseEvent *event)

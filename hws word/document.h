@@ -26,6 +26,7 @@ public:
     char *row_text;
 
     Row *Next_Row;
+    Row *Prev_Row;
 
     Row();
     void add_block();
@@ -33,19 +34,30 @@ public:
     void edit(char *s);
 };
 
-
+//=================文档光标================
+class Cursor {
+public:
+    Row *hang;
+    int col;
+};
 //=================整个文档================
 class Document {
 public:
     Row *first_row;
     Row *cur_row;
-    Row *pre_row;
+    Cursor cursor;
 
     Document();
     void add_row(Row *r);
-    void input();
     void read_file(char *file);
+    void save_file(char *file);
     void show_doc();
+    void cursor_left();
+    void cursor_right();
+    void cursor_up();
+    void cursor_down();
+    void cursor_home();
+    void cursor_end();
 
 };
 #endif // DOCUMENT_H

@@ -22,62 +22,151 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->resize(QSize(1024,768));
 
+    setWindowIcon(QIcon(":/pics/icons/logo.ico")); // add the logo of the application
     CreateMenu();
+
+    initToolBar(); // todo
     ColorSelect();
     update();
-//    connect(timer,SIGNAL(timeout()),this,SLOT(update()));
-//    timer->start(1000);
-    //调用控件，仅试用
-    /*
-    textedit = new QPlainTextEdit;
-    setCentralWidget(textedit);
-    */
 
-    //申明一个Document对象
-    //读入Hello World!
-    //并从控制台输出Document的内容
-    /*
-    Document M;
-    char a[20]={"Hello World!"};
-    M.first_row->edit(a);
-    M.show_doc();
-    */
 }
 
 void MainWindow::CreateMenu()
 {
     // File 菜单栏
-    File = menuBar()->addMenu(tr("File"));
-    File_New = new QAction(tr("新建"),this);
+
+    /* New */
+    File_New = new QAction(tr("&New"), this);
     File_New->setShortcut(QKeySequence::New);
-    File_Open=new QAction(tr("打开"),this);
+    File_New->setToolTip("Create a new file");
+    File_New->setStatusTip("Create file");
+    File_New->setIcon(QIcon(":/pics/icons/filenew.png"));
+    File_New->showStatusText(this->statusBar());
+
+
+    /* Open */
+    File_Open=new QAction(tr("O&pen"), this);
     File_Open->setShortcut(QKeySequence::Open);
-    File_Save=new QAction(tr("保存"),this);
+    File_Open->setToolTip("Open an existing file");
+    File_Open->setStatusTip("Open file");
+    File_Open->setIcon(QIcon(":pics/icons/fileopen.png"));
+
+    /* Save */
+    File_Save=new QAction(tr("&Save"), this);
+    File_Save->setToolTip("Save current file");
+    File_Save->setStatusTip("Save file");
+    File_Save->setIcon(QIcon(":/pics/icons/filesave.png"));
     File_Save->setShortcut(QKeySequence::Save);
 
+
+    /* Save as */
+    File_Save_as = new QAction(tr("Save &As"), this);
+    File_Save_as->setIcon(QIcon(":/pics/icons/filesaveas.png"));
+
+    /* Print */
+    File_Print = new QAction(tr("Print"),this);
+    File_Print->setToolTip("Print the page");
+    File_Print->setStatusTip("Print File");
+    File_Print->setShortcut(QKeySequence("Ctrl+P"));
+    File_Print->setIcon(QIcon(":/pics/icons/print.png"));
+
+    /* Exit */
+    File_Exit = new QAction(tr("E&xit"),this);
+    File_Exit->setToolTip("Exit the Application");
+    File_Exit->setStatusTip("Exit Miniword");
+    File_Exit->setIcon(QIcon(":/pics/icons/fileexit.png"));
+
+   /* add all these into the menu */
+    File = menuBar()->addMenu((tr("&File")));
     File->addAction(File_New);
     File->addAction(File_Open);
     File->addAction(File_Save);
+    File->addAction(File_Save_as);
+    File->addSeparator();
+    File->addAction(File_Print);
+    File->addAction(File_Exit);
 
 
     // Edit 菜单栏
-    Edit = menuBar()->addMenu(tr("Edit"));
-    Edit_Search=new QAction(tr("查找文本"),this);
+
+
+    /* find */
+    Edit_Search = new QAction(tr("&Find"), this);
+    Edit_Search->setToolTip("Find text and/or replace");
+    Edit_Search->setStatusTip("Find text");
+    Edit_Search->setIcon(QIcon(":/pics/icons/editfind.png"));
     Edit_Search->setShortcut(QKeySequence::Find);
 
+    /* copy */
+    Edit_Copy = new QAction(tr("&Copy"), this);
+    Edit_Copy->setToolTip("Copy");
+    Edit_Copy->setStatusTip("Copy Text");
+    Edit_Copy->setShortcut(QKeySequence::Copy);
+    Edit_Copy->setIcon(QIcon(":/pics/icons/editcopy.png"));
+
+    /* paste */
+    Edit_Paste = new QAction(tr("P&aste"), this);
+    Edit_Paste->setToolTip("Paste");
+    Edit_Paste->setStatusTip("Paste Text");
+    Edit_Paste->setShortcut(QKeySequence::Paste);
+    Edit_Paste->setIcon(QIcon(":/pics/icons/editpaste.png"));
+
+    /* cut */
+    Edit_Cut = new QAction(tr("C&ut"), this);
+    Edit_Cut->setToolTip("Cut");
+    Edit_Cut->setStatusTip("Cut Text");
+    Edit_Cut->setShortcut(QKeySequence::Cut);
+    Edit_Cut->setIcon(QIcon(":/pics/icons/editcut.png"));
+
+    /* undo */
+    Edit_Undo = new QAction(tr("Undo"),this);
+    Edit_Undo->setIcon(QIcon(":/pics/icons/editundo.png"));
+    Edit_Undo->setToolTip("Undo");
+    Edit_Undo->setStatusTip("Undo Operation");
+    Edit_Undo->setShortcut(QKeySequence::Undo);
+    Edit_Undo->setEnabled(false); // initially no text in the editor
+
+    /* Redo */
+    Edit_Redo =new QAction(tr("Redo"),this);
+    Edit_Redo->setIcon(QIcon(":/pics/icons/editredo.png"));
+    Edit_Redo->setToolTip("Redo");
+    Edit_Redo->setStatusTip("Redo Operation");
+    Edit_Redo->setShortcut(QKeySequence::Redo);
+    Edit_Redo->setEnabled(false); // initiallly no text in the editor
+
+    /* Select All */
+    Edit_Select_all = new QAction(tr("Select All"),this);
+    Edit_Select_all->setShortcut(QKeySequence::SelectAll);
+    Edit_Select_all->setIcon(QIcon(":/pics/icons/editselect.png"));
+
+    Edit = menuBar()->addMenu(tr("&Edit"));
+    Edit->addAction(Edit_Cut);
+    Edit->addAction(Edit_Copy);
+    Edit->addAction(Edit_Paste);
+    Edit->addAction(Edit_Undo);
+    Edit->addAction(Edit_Redo);
+    Edit->addSeparator();
     Edit->addAction(Edit_Search);
+    Edit->addAction(Edit_Select_all);
+
+
 
 
     // Help 菜单栏
     Help = menuBar()->addMenu(tr("Help"));
-    Help_Help=new QAction(tr("帮助文档"),this);
+    /* help */
+    Help_Help = new QAction(tr("Help docs"),this);
+    Help_Help->setIcon(QIcon(":/pics/icons/helpabout.png"));
 
     Help->addAction(Help_Help);
 
 
     // About 菜单栏
     About = menuBar()->addMenu(tr("About"));
-    About_About=new QAction(tr("关于软件"),this);
+
+    /* about */
+    About_About=new QAction(tr("Miniword"),this);
+    About_About->setIcon(QIcon(":/pics/icons/logo.ico"));
 
     About->addAction(About_About);
 
@@ -88,6 +177,27 @@ void MainWindow::CreateMenu()
     connect(this->Edit_Search,SIGNAL(triggered(bool)),this,SLOT(Find_Text()));
     connect(this->Help_Help,SIGNAL(triggered(bool)),this,SLOT(Show_Help()));
     connect(About_About,SIGNAL(triggered(bool)),this,SLOT(Show_About()));
+}
+
+void MainWindow::initToolBar()
+{
+
+    toolBar=addToolBar(tr("Main"));
+    toolBar->addAction(File_New);
+    toolBar->addAction(File_Open);
+    toolBar->addAction(File_Save);
+    toolBar->addSeparator();
+    toolBar->addAction(Edit_Cut);
+    toolBar->addAction(Edit_Copy);
+    toolBar->addAction(Edit_Paste);
+    toolBar->addAction(Edit_Search);
+    toolBar->addAction(Edit_Undo);
+    toolBar->addAction(Edit_Redo);
+    toolBar->addSeparator();
+    toolBar->addAction(About_About);
+    toolBar->addAction(File_Print);
+    toolBar->setVisible(true);
+    //connect(toolEditAction,SIGNAL(toggled(bool)),toolBar,SLOT(setVisible(bool)));
 }
 
 // 打开文件选项

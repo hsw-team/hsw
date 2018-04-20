@@ -37,18 +37,33 @@ class MainWindow : public QMainWindow
     QMenu *Help;
     QMenu *About;
 
-    QAction *File_New;
-    QAction *File_Open;
-    QAction *File_Save;
-    QAction *Edit_Search;
+    QAction *File_New;                    // new file
+    QAction *File_Open;                   // open file
+    QAction *File_Save;                   // save file
+    QAction *File_Save_as;                // save file as
+    QAction *File_Print;                  // print the file
+    QAction *File_Exit;                   // exit the file
+
+    QAction *Edit_Search;                 // find text
+    QAction *Edit_Cut;                    // cut text
+    QAction *Edit_Copy;                   // copy text
+    QAction *Edit_Paste;                  // paste text
+    QAction *Edit_Undo;                   // undo
+    QAction *Edit_Redo;                   // redo
+    QAction *Edit_Select_all;             // Select all
+
     QAction *About_About;
     QAction *Help_Help;
+
+    QToolBar *toolBar;
+
 
     bool caps = false;
     Document sentence;
     QString qsentence;
 
     void CreateMenu();
+    void initToolBar();
     void ColorSelect();
 private slots:
 

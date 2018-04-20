@@ -35,4 +35,5 @@ HEADERS += \
 #RC_FILE=images/logo.rc
 
 RESOURCES += \
-    image.qrc
+    image.qrc \
+    png.qrc

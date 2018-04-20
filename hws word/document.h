@@ -31,7 +31,7 @@ public:
     Row();
     void add_block();
     //void append(char s);
-    void edit(char *s);
+    //void edit(char *s);
 };
 
 //=================文档光标================
@@ -48,6 +48,7 @@ public:
     Cursor cursor;
 
     Document();
+    void edit(char *s);
     void add_row(Row *r);
     void read_file(char *file);
     void save_file(char *file);

@@ -18,7 +18,7 @@ void Row::add_block()
 
     this->max_len += 100;
 }
-void Row::edit(char *s)
+/*void Row::edit(char *s)
 {
     qDebug() << "调用 edit()\n";
     int s_len = strlen(s);
@@ -34,7 +34,7 @@ void Row::edit(char *s)
         strcat(this->row_text, s);
         this->cur_len += s_len;
     }
-}
+}*/
 
 
 //=========================================================================================
@@ -44,12 +44,33 @@ Document::Document()
     qDebug() << " Document 构造函数\n";
     //创建第一行
     this->first_row = new Row;
-    this->cur_row = this->first_row;
+    this->cursor.hang = this->first_row;
     this->first_row->Prev_Row = NULL;
     //光标初始化
     cursor.hang = first_row;
     cursor.col = 0;
 }
+void Document::edit(char *s)
+{
+    qDebug() << "***DOCUMNET*** 调用 edit()\n";
+    int s_len = strlen(s);
+    while (s_len >= (this->cursor.hang->max_len - this->cursor.hang->cur_len)) {
+        this->cursor.hang->add_block();
+        qDebug() << "edit循环\n";
+    }
+
+    for(int i=0;i < cursor.hang->cur_len - cursor.col;i++){
+        cursor.hang->row_text[i + cursor.col + s_len] = cursor.hang->row_text[i + cursor.col];
+    }
+
+    for(int j=0;j<s_len;j++){
+        cursor.hang->row_text[j + cursor.col] = s[j];
+    }
+
+    this->cursor.hang->cur_len += s_len;
+    this->cursor.col += s_len;
+}
+
 void Document::add_row(Row *r)
 {
     Row *tmp = new Row;
@@ -57,8 +78,8 @@ void Document::add_row(Row *r)
     tmp->Next_Row = r->Next_Row;
     r->Next_Row = tmp;
     r = r->Next_Row;
-    this->cur_row = r;
-    cursor.hang = this->cur_row;
+    this->cursor.hang = r;
+    cursor.hang = this->cursor.hang;
     cursor.col = 0;
 }
 void Document::show_doc()
@@ -84,9 +105,9 @@ void Document::read_file(char *s)
         while(in.readLineInto(&line_text)){
             qDebug()<<line_text;
             str = line_text.toStdString() + "\n";
-            this->cur_row->edit((char*)str.c_str());
+            this->edit((char*)str.c_str());
             //qDebug() << "@@ " << this->cur_row->row_text << "## " << this->cur_row;
-            this->add_row(this->cur_row);
+            this->add_row(this->cursor.hang);
         }
         inputFile.close();
     }
@@ -106,7 +127,7 @@ void Document::cursor_left()
     if(cursor.col == 0){
         if(cursor.hang->Prev_Row){
             cursor.hang = cursor.hang->Prev_Row;
-            cursor.col = cursor.hang->cur_len;
+            cursor.col = cursor.hang->cur_len - 1;
         }
     }
     else{
@@ -116,7 +137,7 @@ void Document::cursor_left()
 void Document::cursor_right()
 {
     qDebug() << "@Cursor Right";
-    if(cursor.col == cursor.hang->cur_len){//在本行行尾
+    if(cursor.col == cursor.hang->cur_len || cursor.hang->row_text[cursor.col+1] == '\n'){//在本行行尾
         if(cursor.hang->Next_Row){//如果有下一行，变到下一行开头。没有下一行那就不变
             cursor.hang = cursor.hang->Next_Row;
             cursor.col = 0;

@@ -176,7 +176,7 @@ void MainWindow::ColorSelect()//颜色控制
 void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
 {
     char n1[10];
-    string n ;
+    string n;
     n = ev->key();
     if(ev->key() == Qt::Key_CapsLock)//大小写切换
     {
@@ -192,13 +192,13 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         {
             transform(n.begin(),n.end(),n.begin(),::tolower);
             strcpy(n1,n.c_str());
-            sentence.cur_row->edit(n1);
+            sentence.edit(n1);
         }
         else
         {
             transform(n.begin(),n.end(),n.begin(),::toupper);
             strcpy(n1,n.c_str());
-            sentence.cur_row->edit(n1);
+            sentence.edit(n1);
         }
     }
 
@@ -206,38 +206,37 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     {
         n = "\n";
         strcpy(n1,n.c_str());
-        sentence.cur_row->edit(n1);
-        sentence.add_row(sentence.cur_row);
-        sentence.cursor.hang = sentence.cur_row;
+        sentence.edit(n1);
+        sentence.add_row(sentence.cursor.hang);
         sentence.cursor.col = 0;
     }
     else if(n == "\u0001")//输入为TAB
     {
         n = "    ";
         strcpy(n1,n.c_str());
-        sentence.cur_row->edit(n1);
-        sentence.add_row(sentence.cur_row);
+        sentence.edit(n1);
+        //sentence.add_row(sentence.cur_row);
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
-        if(sentence.cur_row->cur_len > 0)
+        if(sentence.cursor.col > 0)
         {
-            sentence.cur_row->row_text[--sentence.cur_row->cur_len] = '\0';
+            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
             sentence.cursor.col--;
         }
-        else if(sentence.cur_row->cur_len == 0 && sentence.cur_row != sentence.first_row)
+        else if(sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row)
         {
-            Row *temp = sentence.cur_row;
-            sentence.cur_row = temp->Prev_Row;
+            Row *temp = sentence.cursor.hang;
+            sentence.cursor.hang = temp->Prev_Row;
             if(temp->Next_Row){
-                temp->Next_Row->Prev_Row = sentence.cur_row;
+                temp->Next_Row->Prev_Row = sentence.cursor.hang;
             }
-            sentence.cur_row->Next_Row = temp->Next_Row;
+            sentence.cursor.hang->Next_Row = temp->Next_Row;
             delete temp;
-            //现在cur_row指向的就是前一行,然后还需要删掉上一行的'\n'符号。
-            sentence.cur_row->row_text[--sentence.cur_row->cur_len] = '\0';
-            sentence.cursor.hang = sentence.cur_row;
-            sentence.cursor.col = sentence.cur_row->cur_len;
+            //现在cursor.hang指向的就是前一行,然后还需要删掉上一行的'\n'符号。
+            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
+            sentence.cursor.hang = sentence.cursor.hang;
+            sentence.cursor.col = sentence.cursor.hang->cur_len;
         }
     }
     else if(n=="\u0012"){//左
@@ -257,10 +256,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         if(caps == false)
                 transform(n.begin(),n.end(),n.begin(),::tolower);
         strcpy(n1,n.c_str());
-        sentence.cur_row->edit(n1);
-        sentence.cursor.col += strlen(n1);
+        sentence.edit(n1);
+        //sentence.cursor.col += strlen(n1);
     }
-    qDebug() << sentence.cur_row->cur_len <<sentence.cur_row->max_len;
+    qDebug() << sentence.cursor.hang->cur_len <<sentence.cursor.hang->max_len;
     Row *temp = sentence.first_row;
     qsentence = "";
     while(temp)
@@ -295,9 +294,11 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setFont(font);//设置字体
     painter.setPen(QColor(0, 0, 0));//画笔颜色
     painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);//绘制文字
+
     textcursor.load(":/image/cursor.png");
-    if(time.second()%2 == 0)
-        painter.drawPixmap(30,30,textcursor);
+    if(time.msec()%1000 < 700)
+        painter.drawPixmap(84+13*sentence.cursor.col,97,textcursor);
+        //横向间距13
     update();
 }
 

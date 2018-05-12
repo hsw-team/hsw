@@ -23,12 +23,48 @@ MainWindow::MainWindow(QWidget *parent)
     this->resize(QSize(1024,768));
 
     setWindowIcon(QIcon(":/pics/icons/logo.ico")); // add the logo of the application
-    CreateMenu();
+    cenWid = new QWidget;
+    this->setCentralWidget(cenWid);
 
+    cenWid->setFocusPolicy(Qt::StrongFocus);
+    cenWid->grabKeyboard();
+    QVBoxLayout *pVlayout = new QVBoxLayout;
+
+    s = new QScrollArea;
+    s->setGeometry(0, 0, this->width(), this->height());
+    s->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    s->setStyleSheet("background-color:white;font-size:50px");
+    s->setStyleSheet("QLabel{background-image: url(:/res/on.png);"
+                   "background-position:center left;"
+                   "background-repeat: no-repeat}");
+    QTime time = QTime::currentTime();
+    pLabel=new QLabel;
+    if(time.msec()%1000 < 700)
+    {
+        QPixmap pixmap(":/image/cursor.png");
+        pLabel->setPixmap(pixmap);
+        pLabel->setScaledContents(true);
+    }
+    pLabel->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
+    pLabel->setText(qsentence);
+
+    s->setWidget(pLabel);
+    CreateMenu();
     initToolBar(); // todo
     ColorSelect();
-    update();
+//    update();
+    pVlayout->addWidget(s);
+    pVlayout->setMargin(0);
+    cenWid->setLayout(pVlayout);
 
+
+//    QTimer *timer=new QTimer(this);
+//    connect(timer,SIGNAL(timeout()),this,SLOT(print_cursor()));
+//    timer->start(1000);
+
+//    QTimer *timer=new QTimer(this);
+//    connect(timer,SIGNAL(timeout()),this,SLOT(blink()));
+//    timer->start(10);
 }
 
 void MainWindow::CreateMenu()
@@ -377,6 +413,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
         qsentence.append(temp->row_text);
         temp = temp->Next_Row;
     }
+    QLabel *label=new QLabel();
+    label->setText(qsentence);
+    //label->re
+    s->setWidget(label);
     qDebug() << qsentence;
 
     qDebug() << "Ccccursorrrr hang：" << sentence.cursor.hang;
@@ -384,6 +424,25 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
 
     update();
 }
+//void MainWindow::print_cursor()
+//{
+//    QTime time = QTime::currentTime();
+//    QPixmap pixmap(":/image/cursor.png");
+//    if(time.msec()%1000 < 700)
+//    {
+//        pLabel->setPixmap(pixmap);
+//        pLabel->setFixedSize(100, 100);
+////        pLabel->setScaledContents(true);
+////        pLabel->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
+////        pLabel->setText(qsentence);
+//    }
+//    else
+//    {
+//        pLabel->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
+//        pLabel->setText(qsentence);
+//    }
+//    update();
+//}
 //void MainWindow::mousePressEvent(QMouseEvent *event)
 //{
 //    if(event->button()==Qt::LeftButton) //鼠标左键按下
@@ -391,26 +450,50 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
 //        qDebug() <<
 // event->pos();
 //}
-void MainWindow::paintEvent(QPaintEvent *event)
-{
+//void MainWindow::paintEvent(QPaintEvent *event)
+//{
 
-    Q_UNUSED(event);
-    QPainter painter(this);
-    QPixmap textcursor;
-    QTime time = QTime::currentTime();
-    QRect rc(100, 100, 800, 800);//在一个700x700的矩形框内输入文字(实验)
-    QFont font;
-    font.setPixelSize(26);//设置字号
-    painter.setFont(font);//设置字体
-    painter.setPen(QColor(0, 0, 0));//画笔颜色
-    painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);//绘制文字
+//    Q_UNUSED(event);
+//    QPainter painter(this->cenWid);
+//    QPixmap textcursor;
+//    QTime time = QTime::currentTime();
+//    //QRect rc(100, 100, 1000000,1000000);//在一个700x700的矩形框内输入文字(实验)
+//    QFont font;
+//    font.setPixelSize(26);//设置字号
+//    painter.setFont(font);//设置字体
+//    painter.setPen(QColor(0, 0, 0));//画笔颜色
+//    painter.drawText(100,100,qsentence);//绘制文字
 
-    textcursor.load(":/image/cursor.png");
-    if(time.msec()%1000 < 700)
-        painter.drawPixmap(84+13*sentence.cursor.col,97,textcursor);
-        //横向间距13
-    update();
-}
+//    textcursor.load(":/image/cursor.png");
+//    if(time.msec()%1000 < 700)
+//        painter.drawPixmap(84+13*sentence.cursor.col,97,textcursor);
+//        //横向间距13
+//    update();
+//}
+
+//void MainWindow::blink()
+//{
+//     cursorTimer ++;
+//     if(cursorTimer%2==0)
+//     {
+//         if(cursorTimer==100)
+//             cursorTimer=0;
+//         delete s->widget();
+//         QLabel *label=new QLabel();
+//         label->setText(qsentence);
+//         //label->re
+//         s->setWidget(label);
+//         //qDebug()<<"blink1";
+//     }
+//     else
+//     {
+//         delete s->widget();
+//         QLabel *label=new QLabel();
+//         label->setText(qsentence);
+//         s->setWidget(label);
+//         //qDebug()<<"blink2";
+//     }
+//}
 
 MainWindow::~MainWindow()
 {

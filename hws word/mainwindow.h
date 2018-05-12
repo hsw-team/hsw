@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <QEvent>
+#include <QAbstractScrollArea>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
@@ -11,15 +12,20 @@
 #include <QStatusBar>
 #include <QFileDialog>
 #include <QString>
+#include <QLabel>
 #include <QMessageBox>
 #include <QSize>
 #include <QPlainTextEdit>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QTime>
 #include <QTimer>
 #include <QThread>
+#include <QWidget>
+#include <QVBoxLayout>
 #include <windows.h>
 #include "document.h"
 
@@ -56,7 +62,13 @@ class MainWindow : public QMainWindow
     QAction *Help_Help;
 
     QToolBar *toolBar;
+    QLabel *pLabel;
+    QLabel *curlabel;
 
+    QScrollArea *s;
+    QWidget *cenWid;
+
+    qint8 cursorTimer = 0;
 
     bool caps = false;
     Document sentence;
@@ -71,7 +83,9 @@ private slots:
     void Show_Help();
     void Show_About();
     void Find_Text();
-    void paintEvent(QPaintEvent *event);
+    //void blink();
+    //void paintEvent(QPaintEvent *event);
+    //void print_cursor();
     void keyReleaseEvent(QKeyEvent *event);
     //void mousePressEvent(QMouseEvent *event);
 

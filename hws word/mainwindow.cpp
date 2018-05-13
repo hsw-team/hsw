@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setAttribute(Qt::WA_KeyCompression);
     this->setFocusPolicy(Qt::WheelFocus);
     ui->scrollArea->setStyleSheet("background:white");
+
 }
 
 void MainWindow::Open_File()
@@ -116,13 +117,25 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
             sentence.edit(n1);
         }
     }
+    else if(ev->modifiers()== Qt::ControlModifier)
+    {
+        qDebug()<<"Discard";
+    }
 
     else if(n == "\u0004")//输入为回车
     {
-        n = "\n";
-        strcpy(n1,n.c_str());
-        sentence.edit(n1);
+        int i,j = 0;
+        int col = sentence.cursor.col;
+        Row *hang = sentence.cursor.hang;
         sentence.add_row(sentence.cursor.hang);
+        sentence.cursor.hang = sentence.cursor.hang->Next_Row;
+        for(i = col; i < hang->cur_len; i++)
+        {
+                sentence.cursor.hang->row_text[j++] = hang->row_text[i];
+                hang->row_text[i] = '\0';
+        }
+        hang->cur_len = col;
+        sentence.cursor.hang->cur_len = j;
         sentence.cursor.col = 0;
     }
     else if(n == "\u0001")//输入为TAB
@@ -134,12 +147,20 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
-        if(sentence.cursor.col > 0)
+        if(sentence.cursor.col > 0)//当指针不在行首的时候(之前有字符可以删除)
         {
-            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
+            //TODO：
+            //判断中文字符
+
+            //后面字符依次往前挪一个位置
+            for(int i = sentence.cursor.col - 1; i < sentence.cursor.hang->cur_len; i++)
+            {
+                sentence.cursor.hang->row_text[i] = sentence.cursor.hang->row_text[i+1];
+            }
             sentence.cursor.col--;
+            sentence.cursor.hang->cur_len--;
         }
-        else if(sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row)
+        else if(sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row)//当在行首，并且不是第一行(第一行行首删除就不用操作了)
         {
             Row *temp = sentence.cursor.hang;
             sentence.cursor.hang = temp->Prev_Row;
@@ -147,11 +168,16 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
                 temp->Next_Row->Prev_Row = sentence.cursor.hang;
             }
             sentence.cursor.hang->Next_Row = temp->Next_Row;
-            delete temp;
-            //现在cursor.hang指向的就是前一行,然后还需要删掉上一行的'\n'符号。
-            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
-            sentence.cursor.hang = sentence.cursor.hang;
             sentence.cursor.col = sentence.cursor.hang->cur_len;
+            //需要把之后行的加到后面
+            int i = 0;
+            int col = sentence.cursor.col;
+            while(i < temp->cur_len)
+            {
+                sentence.cursor.hang->row_text[col++] =  temp->row_text[i++];
+                sentence.cursor.hang->cur_len++;
+            }
+            delete temp;
         }
     }
     else if(n=="\u0012"){//左
@@ -180,6 +206,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
     while(temp)
     {
         qsentence.append(temp->row_text);
+        qsentence.append('\n');//MODIFIED
         temp = temp->Next_Row;
     }
     ui->label->setText(qsentence);
@@ -199,6 +226,7 @@ void MainWindow::inputMethodEvent(QInputMethodEvent *a)
     while(temp)
     {
         qsentence.append(temp->row_text);
+        qsentence.append('\n');//MODIFIED
         temp = temp->Next_Row;
     }
     ui->label->setText(qsentence);

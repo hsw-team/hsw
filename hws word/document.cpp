@@ -56,31 +56,30 @@ void Document::edit(char *s)
     int s_len = strlen(s);
     while (s_len >= (this->cursor.hang->max_len - this->cursor.hang->cur_len)) {
         this->cursor.hang->add_block();
-        qDebug() << "edit循环\n";
+        qDebug() << "edit循环";
+    }
+    this->cursor.hang->cur_len += s_len;
+
+    for(int i = cursor.hang->cur_len - 1; i >= cursor.col; i--)
+    {
+        cursor.hang->row_text[i + s_len] = cursor.hang->row_text[i];
     }
 
-    for(int i=0;i < cursor.hang->cur_len - cursor.col;i++){
-        cursor.hang->row_text[i + cursor.col + s_len] = cursor.hang->row_text[i + cursor.col];
-    }
-
-    for(int j=0;j<s_len;j++){
+    for(int j = 0; j < s_len; j++){
         cursor.hang->row_text[j + cursor.col] = s[j];
     }
-
-    this->cursor.hang->cur_len += s_len;
     this->cursor.col += s_len;
 }
 
-void Document::add_row(Row *r)
+void Document::add_row(Row *ptr)
 {
     Row *tmp = new Row;
-    tmp->Prev_Row = r;
-    tmp->Next_Row = r->Next_Row;
-    r->Next_Row = tmp;
-    r = r->Next_Row;
-    this->cursor.hang = r;
-    cursor.hang = this->cursor.hang;
-    cursor.col = 0;
+    tmp->Prev_Row = ptr;
+    tmp->Next_Row = ptr->Next_Row;
+    if(ptr->Next_Row)
+        ptr->Next_Row->Prev_Row = tmp;
+    ptr->Next_Row = tmp;
+    ptr = tmp;
 }
 void Document::show_doc()
 {
@@ -136,15 +135,18 @@ void Document::cursor_left()
 }
 void Document::cursor_right()
 {
-    qDebug() << "@Cursor Right";
-    if(cursor.col == cursor.hang->cur_len || cursor.hang->row_text[cursor.col+1] == '\n'){//在本行行尾
-        if(cursor.hang->Next_Row){//如果有下一行，变到下一行开头。没有下一行那就不变
-            cursor.hang = cursor.hang->Next_Row;
-            cursor.col = 0;
+    qDebug() << "@Cursor Left";
+    if(cursor.col == 0){
+        if(cursor.hang->Prev_Row){
+            cursor.hang = cursor.hang->Prev_Row;
+            cursor.col = cursor.hang->cur_len;
+            //MODIFIED
         }
     }
-    else{   //不在本行末尾，column+1即可
-        cursor.col++;
+    else{
+        //TODO:
+        //判断中文字符
+        cursor.col--;
     }
 }
 void Document::cursor_up()

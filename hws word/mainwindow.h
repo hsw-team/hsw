@@ -16,6 +16,7 @@
 #include <QString>
 #include <QLabel>
 #include <QMessageBox>
+#include <QBitmap>
 #include <QSize>
 #include <QPlainTextEdit>
 #include <QPaintEvent>

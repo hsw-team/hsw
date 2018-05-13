@@ -6,8 +6,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->setFocus();
     ui->label->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
     ui->label->setText(qsentence);
+    ui->label_2->setGeometry(12*sentence.cursor.col-11,27*sentence.cursor.row,30,30);
     ui->scrollArea->setWidgetResizable(true);
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");//情况2
     QTextCodec::setCodecForLocale(codec);
@@ -117,10 +119,39 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
             sentence.edit(n1);
         }
     }
+    else if(ev->modifiers()== Qt::ShiftModifier && ev->key() == Qt::CTRL)
+    {
+//        qDebug()<<"Discard";
+    }
+    else if(ev->key()== Qt::SHIFT && ev->modifiers() == Qt::ControlModifier)
+    {
+//        qDebug()<<"Discard";
+    }
+    else if(ev->modifiers()== Qt::ShiftModifier && ev->key()== Qt::ALT)
+    {
+//        qDebug()<<"Discard";
+    }
+    else if(ev->key()== Qt::SHIFT && ev->modifiers()== Qt::AltModifier)
+    {
+//        qDebug()<<"Discard";
+    }
     else if(ev->modifiers()== Qt::ControlModifier)
     {
-        qDebug()<<"Discard";
+//        qDebug()<<"Discard";
     }
+    else if(ev->key()== Qt::CTRL)
+    {
+//        qDebug()<<"Discard";
+    }
+    else if(ev->key()== Qt::ALT)
+    {
+//        qDebug()<<"Discard";
+    }
+    else if(ev->modifiers()== Qt::AltModifier)
+    {
+//        qDebug()<<"Discard";
+    }
+
 
     else if(n == "\u0004")//输入为回车
     {
@@ -137,6 +168,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
         hang->cur_len = col;
         sentence.cursor.hang->cur_len = j;
         sentence.cursor.col = 0;
+        sentence.cursor.row++;
     }
     else if(n == "\u0001")//输入为TAB
     {
@@ -169,6 +201,43 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
             }
             sentence.cursor.hang->Next_Row = temp->Next_Row;
             sentence.cursor.col = sentence.cursor.hang->cur_len;
+            //需要把之后行的加到后面
+            int i = 0;
+            int col = sentence.cursor.col;
+            while(i < temp->cur_len)
+            {
+                sentence.cursor.hang->row_text[col++] =  temp->row_text[i++];
+                sentence.cursor.hang->cur_len++;
+            }
+            sentence.cursor.row--;
+            delete temp;
+        }
+    }
+    else if(n == "\u0007")//delete
+    {
+        if(sentence.cursor.col < sentence.cursor.hang->cur_len)//当指针不在行尾的时候(之前有字符可以删除)
+        {
+            //TODO：
+            //判断中文字符
+//1234,cur_len=4
+
+            //后面字符依次往前挪一个位置
+            for(int i = sentence.cursor.col; i < sentence.cursor.hang->cur_len; i++)
+            {
+                sentence.cursor.hang->row_text[i] = sentence.cursor.hang->row_text[i+1];
+            }
+            sentence.cursor.hang->cur_len--;
+        }
+        else if(sentence.cursor.col == sentence.cursor.hang->cur_len && sentence.cursor.hang->Next_Row)//当在行尾，并且不是最后一行一行(最后一行行尾删除就不用操作了)
+        {
+            Row *temp = sentence.cursor.hang->Next_Row;
+            if(temp->Next_Row){
+                sentence.cursor.hang->Next_Row = temp->Next_Row;
+            }
+            else
+            {
+                sentence.cursor.hang->Next_Row = NULL;
+            }
             //需要把之后行的加到后面
             int i = 0;
             int col = sentence.cursor.col;
@@ -210,6 +279,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
         temp = temp->Next_Row;
     }
     ui->label->setText(qsentence);
+    ui->label_2->setGeometry(12*sentence.cursor.col-11,27*sentence.cursor.row,30,30);
     ui->label->adjustSize();
     ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
     qDebug() << qsentence;
@@ -232,7 +302,6 @@ void MainWindow::inputMethodEvent(QInputMethodEvent *a)
     ui->label->setText(qsentence);
     ui->label->adjustSize();
     ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
-
 }
 
 MainWindow::~MainWindow()

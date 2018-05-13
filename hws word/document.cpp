@@ -159,6 +159,7 @@ void Document::cursor_up()
         if(cursor.col > cursor.hang->cur_len){
             cursor.col = cursor.hang->cur_len;
         }
+        cursor.row--;
     }
 }
 void Document::cursor_down()
@@ -169,6 +170,7 @@ void Document::cursor_down()
         if(cursor.col > cursor.hang->cur_len){
             cursor.col = cursor.hang->cur_len;
         }
+        cursor.row++;
     }
 }
 void Document::cursor_home()

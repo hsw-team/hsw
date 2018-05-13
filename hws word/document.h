@@ -38,7 +38,8 @@ public:
 class Cursor {
 public:
     Row *hang;
-    int col;
+    int row = 0;
+    int col = 0;
 };
 //=================整个文档================
 class Document {

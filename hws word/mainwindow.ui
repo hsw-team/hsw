@@ -112,7 +112,9 @@
          </rect>
         </property>
         <property name="styleSheet">
-         <string notr="true">border-image: url(:/my_images/icons/I.png);background: transparent;</string>
+         <string notr="true">border-image: url(:/my_images/icons/I.png);
+background: transparent;
+</string>
         </property>
         <property name="text">
          <string/>
@@ -310,6 +312,10 @@
    </property>
   </action>
   <action name="actionFind_F">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/my_images/icons/find.png</normaloff>:/my_images/icons/find.png</iconset>
+   </property>
    <property name="text">
     <string>Find(&amp;F)</string>
    </property>

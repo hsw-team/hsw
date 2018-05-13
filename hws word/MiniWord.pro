@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2018-03-31T10:47:02
+# Project created by QtCreator 2018-05-12T21:45:57
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = MiniWord
+TARGET = Miniword
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -32,8 +32,10 @@ HEADERS += \
         mainwindow.h \
     document.h
 
-#RC_FILE=images/logo.rc
+FORMS += \
+        mainwindow.ui
 
 RESOURCES += \
-    image.qrc \
-    png.qrc
+    icons.qrc
+
+RC_ICONS = "icons/logo.ico"

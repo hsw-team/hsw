@@ -126,19 +126,6 @@ void Document::cursor_left()
     if(cursor.col == 0){
         if(cursor.hang->Prev_Row){
             cursor.hang = cursor.hang->Prev_Row;
-            cursor.col = cursor.hang->cur_len - 1;
-        }
-    }
-    else{
-        cursor.col--;
-    }
-}
-void Document::cursor_right()
-{
-    qDebug() << "@Cursor Left";
-    if(cursor.col == 0){
-        if(cursor.hang->Prev_Row){
-            cursor.hang = cursor.hang->Prev_Row;
             cursor.col = cursor.hang->cur_len;
             //MODIFIED
         }
@@ -147,6 +134,21 @@ void Document::cursor_right()
         //TODO:
         //判断中文字符
         cursor.col--;
+    }
+}
+void Document::cursor_right()
+{
+    qDebug() << "@Cursor Right";
+    if(cursor.col == cursor.hang->cur_len){//在本行行尾
+        if(cursor.hang->Next_Row){//如果有下一行，变到下一行开头。没有下一行那就不变
+            cursor.hang = cursor.hang->Next_Row;
+            cursor.col = 0;
+        }
+    }
+    else{
+        //TODO：
+        //判断中文字符
+        cursor.col++;
     }
 }
 void Document::cursor_up()

@@ -1,206 +1,29 @@
 #include "mainwindow.h"
-#include "document.h"
-#include <windows.h>
-#include <qDebug>
-//==========================================================
-// = 基本完成项：
-//     -- 图标的加入
-//     -- 菜单栏的设置(具体功能待完成)
-//     -- 窗体程序框架
-//     --
-//     --
-// = Todo：
-//     -- 内部数据的实现√
-//     -- 如何在主界面显示Document对象的文本√
-//     -- 光标如何显示
-//     -- 粘贴，插入，删除操作
-//     -- 文字块编辑
-//==========================================================
+#include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
 {
-    this->resize(QSize(1024,768));
+    ui->setupUi(this);
+    ui->label->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
+    ui->label->setText(qsentence);
+    ui->scrollArea->setWidgetResizable(true);
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");//情况2
+    QTextCodec::setCodecForLocale(codec);
+    this->setAttribute(Qt::WA_InputMethodEnabled);
+    this->setAttribute(Qt::WA_KeyCompression);
+    this->setFocusPolicy(Qt::WheelFocus);
+    ui->scrollArea->setStyleSheet("background:white");
 
-    setWindowIcon(QIcon(":/pics/icons/logo.ico")); // add the logo of the application
-    CreateMenu();
-
-    initToolBar(); // todo
-    ColorSelect();
-    update();
+    // 一些初始化时应该默认关闭的操作
+    ui->actionUndo_Z->setEnabled(false);
+    ui->actionRedo_Y->setEnabled(false);
+    // 连接
+     connect(ui->actionFind_F,SIGNAL(triggered()),this,SLOT(Find_Text()));
 
 }
 
-void MainWindow::CreateMenu()
-{
-    // File 菜单栏
-
-    /* New */
-    File_New = new QAction(tr("&New"), this);
-    File_New->setShortcut(QKeySequence::New);
-    File_New->setToolTip("Create a new file");
-    File_New->setStatusTip("Create file");
-    File_New->setIcon(QIcon(":/pics/icons/filenew.png"));
-    File_New->showStatusText(this->statusBar());
-
-
-    /* Open */
-    File_Open=new QAction(tr("O&pen"), this);
-    File_Open->setShortcut(QKeySequence::Open);
-    File_Open->setToolTip("Open an existing file");
-    File_Open->setStatusTip("Open file");
-    File_Open->setIcon(QIcon(":pics/icons/fileopen.png"));
-
-    /* Save */
-    File_Save=new QAction(tr("&Save"), this);
-    File_Save->setToolTip("Save current file");
-    File_Save->setStatusTip("Save file");
-    File_Save->setIcon(QIcon(":/pics/icons/filesave.png"));
-    File_Save->setShortcut(QKeySequence::Save);
-
-
-    /* Save as */
-    File_Save_as = new QAction(tr("Save &As"), this);
-    File_Save_as->setIcon(QIcon(":/pics/icons/filesaveas.png"));
-
-    /* Print */
-    File_Print = new QAction(tr("Print"),this);
-    File_Print->setToolTip("Print the page");
-    File_Print->setStatusTip("Print File");
-    File_Print->setShortcut(QKeySequence("Ctrl+P"));
-    File_Print->setIcon(QIcon(":/pics/icons/print.png"));
-
-    /* Exit */
-    File_Exit = new QAction(tr("E&xit"),this);
-    File_Exit->setToolTip("Exit the Application");
-    File_Exit->setStatusTip("Exit Miniword");
-    File_Exit->setIcon(QIcon(":/pics/icons/fileexit.png"));
-
-   /* add all these into the menu */
-    File = menuBar()->addMenu((tr("&File")));
-    File->addAction(File_New);
-    File->addAction(File_Open);
-    File->addAction(File_Save);
-    File->addAction(File_Save_as);
-    File->addSeparator();
-    File->addAction(File_Print);
-    File->addAction(File_Exit);
-
-
-    // Edit 菜单栏
-
-
-    /* find */
-    Edit_Search = new QAction(tr("&Find"), this);
-    Edit_Search->setToolTip("Find text and/or replace");
-    Edit_Search->setStatusTip("Find text");
-    Edit_Search->setIcon(QIcon(":/pics/icons/editfind.png"));
-    Edit_Search->setShortcut(QKeySequence::Find);
-
-    /* copy */
-    Edit_Copy = new QAction(tr("&Copy"), this);
-    Edit_Copy->setToolTip("Copy");
-    Edit_Copy->setStatusTip("Copy Text");
-    Edit_Copy->setShortcut(QKeySequence::Copy);
-    Edit_Copy->setIcon(QIcon(":/pics/icons/editcopy.png"));
-
-    /* paste */
-    Edit_Paste = new QAction(tr("P&aste"), this);
-    Edit_Paste->setToolTip("Paste");
-    Edit_Paste->setStatusTip("Paste Text");
-    Edit_Paste->setShortcut(QKeySequence::Paste);
-    Edit_Paste->setIcon(QIcon(":/pics/icons/editpaste.png"));
-
-    /* cut */
-    Edit_Cut = new QAction(tr("C&ut"), this);
-    Edit_Cut->setToolTip("Cut");
-    Edit_Cut->setStatusTip("Cut Text");
-    Edit_Cut->setShortcut(QKeySequence::Cut);
-    Edit_Cut->setIcon(QIcon(":/pics/icons/editcut.png"));
-
-    /* undo */
-    Edit_Undo = new QAction(tr("Undo"),this);
-    Edit_Undo->setIcon(QIcon(":/pics/icons/editundo.png"));
-    Edit_Undo->setToolTip("Undo");
-    Edit_Undo->setStatusTip("Undo Operation");
-    Edit_Undo->setShortcut(QKeySequence::Undo);
-    Edit_Undo->setEnabled(false); // initially no text in the editor
-
-    /* Redo */
-    Edit_Redo =new QAction(tr("Redo"),this);
-    Edit_Redo->setIcon(QIcon(":/pics/icons/editredo.png"));
-    Edit_Redo->setToolTip("Redo");
-    Edit_Redo->setStatusTip("Redo Operation");
-    Edit_Redo->setShortcut(QKeySequence::Redo);
-    Edit_Redo->setEnabled(false); // initiallly no text in the editor
-
-    /* Select All */
-    Edit_Select_all = new QAction(tr("Select All"),this);
-    Edit_Select_all->setShortcut(QKeySequence::SelectAll);
-    Edit_Select_all->setIcon(QIcon(":/pics/icons/editselect.png"));
-
-    Edit = menuBar()->addMenu(tr("&Edit"));
-    Edit->addAction(Edit_Cut);
-    Edit->addAction(Edit_Copy);
-    Edit->addAction(Edit_Paste);
-    Edit->addAction(Edit_Undo);
-    Edit->addAction(Edit_Redo);
-    Edit->addSeparator();
-    Edit->addAction(Edit_Search);
-    Edit->addAction(Edit_Select_all);
-
-
-
-
-    // Help 菜单栏
-    Help = menuBar()->addMenu(tr("Help"));
-    /* help */
-    Help_Help = new QAction(tr("Help docs"),this);
-    Help_Help->setIcon(QIcon(":/pics/icons/helpabout.png"));
-
-    Help->addAction(Help_Help);
-
-
-    // About 菜单栏
-    About = menuBar()->addMenu(tr("About"));
-
-    /* about */
-    About_About=new QAction(tr("Miniword"),this);
-    About_About->setIcon(QIcon(":/pics/icons/logo.ico"));
-
-    About->addAction(About_About);
-
-    //动作 connect
-    connect(File_Open,SIGNAL(triggered(bool)),this,SLOT(Open_File()));
-    /*
-    connect(this->,SIGNAL(triggered(bool)),this,SLOT());*/
-    connect(this->Edit_Search,SIGNAL(triggered(bool)),this,SLOT(Find_Text()));
-    connect(this->Help_Help,SIGNAL(triggered(bool)),this,SLOT(Show_Help()));
-    connect(About_About,SIGNAL(triggered(bool)),this,SLOT(Show_About()));
-}
-
-void MainWindow::initToolBar()
-{
-
-    toolBar=addToolBar(tr("Main"));
-    toolBar->addAction(File_New);
-    toolBar->addAction(File_Open);
-    toolBar->addAction(File_Save);
-    toolBar->addSeparator();
-    toolBar->addAction(Edit_Cut);
-    toolBar->addAction(Edit_Copy);
-    toolBar->addAction(Edit_Paste);
-    toolBar->addAction(Edit_Search);
-    toolBar->addAction(Edit_Undo);
-    toolBar->addAction(Edit_Redo);
-    toolBar->addSeparator();
-    toolBar->addAction(About_About);
-    toolBar->addAction(File_Print);
-    toolBar->setVisible(true);
-    //connect(toolEditAction,SIGNAL(toggled(bool)),toolBar,SLOT(setVisible(bool)));
-}
-
-// 打开文件选项
 void MainWindow::Open_File()
 {
     QString file_name = QFileDialog::getOpenFileName(this);
@@ -234,7 +57,7 @@ void MainWindow::Open_File()
 // 查找文本 函数
 void MainWindow::Find_Text()
 {
-    //Todo
+    f.exec(); // 使用exec是因为打开查找窗口后，应该无法对主窗口进行操作
 }
 
 // 显示 Help 函数
@@ -271,20 +94,9 @@ void MainWindow::closeEvent(QCloseEvent)
         break;
     }
 }
-
-void MainWindow::ColorSelect()//颜色控制
+void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
 {
-    pal.setColor(QPalette::Background,Qt::white);
-    setStyleSheet(""
-                  "QMenuBar{"
-                  "background-color:#f0f0f0}"
-                  "");
-    setAutoFillBackground(true);
-    setPalette(pal);
-}
-
-void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
-{
+    this->setFocus();
     char n1[10];
     string n;
     n = ev->key();
@@ -311,13 +123,25 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
             sentence.edit(n1);
         }
     }
+    else if(ev->modifiers()== Qt::ControlModifier)
+    {
+        qDebug()<<"Discard";
+    }
 
     else if(n == "\u0004")//输入为回车
     {
-        n = "\n";
-        strcpy(n1,n.c_str());
-        sentence.edit(n1);
+        int i,j = 0;
+        int col = sentence.cursor.col;
+        Row *hang = sentence.cursor.hang;
         sentence.add_row(sentence.cursor.hang);
+        sentence.cursor.hang = sentence.cursor.hang->Next_Row;
+        for(i = col; i < hang->cur_len; i++)
+        {
+                sentence.cursor.hang->row_text[j++] = hang->row_text[i];
+                hang->row_text[i] = '\0';
+        }
+        hang->cur_len = col;
+        sentence.cursor.hang->cur_len = j;
         sentence.cursor.col = 0;
     }
     else if(n == "\u0001")//输入为TAB
@@ -329,12 +153,20 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     }
     else if(n == "\u0003")//输入为退格且当前字符串大小大于0，删掉最后一个字符
     {
-        if(sentence.cursor.col > 0)
+        if(sentence.cursor.col > 0)//当指针不在行首的时候(之前有字符可以删除)
         {
-            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
+            //TODO：
+            //判断中文字符
+
+            //后面字符依次往前挪一个位置
+            for(int i = sentence.cursor.col - 1; i < sentence.cursor.hang->cur_len; i++)
+            {
+                sentence.cursor.hang->row_text[i] = sentence.cursor.hang->row_text[i+1];
+            }
             sentence.cursor.col--;
+            sentence.cursor.hang->cur_len--;
         }
-        else if(sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row)
+        else if(sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row)//当在行首，并且不是第一行(第一行行首删除就不用操作了)
         {
             Row *temp = sentence.cursor.hang;
             sentence.cursor.hang = temp->Prev_Row;
@@ -342,11 +174,16 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
                 temp->Next_Row->Prev_Row = sentence.cursor.hang;
             }
             sentence.cursor.hang->Next_Row = temp->Next_Row;
-            delete temp;
-            //现在cursor.hang指向的就是前一行,然后还需要删掉上一行的'\n'符号。
-            sentence.cursor.hang->row_text[--sentence.cursor.hang->cur_len] = '\0';
-            sentence.cursor.hang = sentence.cursor.hang;
             sentence.cursor.col = sentence.cursor.hang->cur_len;
+            //需要把之后行的加到后面
+            int i = 0;
+            int col = sentence.cursor.col;
+            while(i < temp->cur_len)
+            {
+                sentence.cursor.hang->row_text[col++] =  temp->row_text[i++];
+                sentence.cursor.hang->cur_len++;
+            }
+            delete temp;
         }
     }
     else if(n=="\u0012"){//左
@@ -375,44 +212,36 @@ void MainWindow::keyReleaseEvent(QKeyEvent *ev)//按键事件
     while(temp)
     {
         qsentence.append(temp->row_text);
+        qsentence.append('\n');//MODIFIED
         temp = temp->Next_Row;
     }
+    ui->label->setText(qsentence);
+    ui->label->adjustSize();
+    ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
     qDebug() << qsentence;
 
     qDebug() << "Ccccursorrrr hang：" << sentence.cursor.hang;
     qDebug() << "Ccccursorrrr column：" << sentence.cursor.col;
-
-    update();
 }
-//void MainWindow::mousePressEvent(QMouseEvent *event)
-//{
-//    if(event->button()==Qt::LeftButton) //鼠标左键按下
-
-//        qDebug() <<
-// event->pos();
-//}
-void MainWindow::paintEvent(QPaintEvent *event)
+void MainWindow::inputMethodEvent(QInputMethodEvent *a)
 {
+    qDebug()<<"当前输入为"<<a->commitString().toUtf8().data();
+    sentence.edit(a->commitString().toUtf8().data());
+    Row *temp = sentence.first_row;
+    qsentence = "";
+    while(temp)
+    {
+        qsentence.append(temp->row_text);
+        qsentence.append('\n');//MODIFIED
+        temp = temp->Next_Row;
+    }
+    ui->label->setText(qsentence);
+    ui->label->adjustSize();
+    ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
 
-    Q_UNUSED(event);
-    QPainter painter(this);
-    QPixmap textcursor;
-    QTime time = QTime::currentTime();
-    QRect rc(100, 100, 800, 800);//在一个700x700的矩形框内输入文字(实验)
-    QFont font;
-    font.setPixelSize(26);//设置字号
-    painter.setFont(font);//设置字体
-    painter.setPen(QColor(0, 0, 0));//画笔颜色
-    painter.drawText(rc,Qt::TextWrapAnywhere,qsentence);//绘制文字
-
-    textcursor.load(":/image/cursor.png");
-    if(time.msec()%1000 < 700)
-        painter.drawPixmap(84+13*sentence.cursor.col,97,textcursor);
-        //横向间距13
-    update();
 }
 
 MainWindow::~MainWindow()
 {
-
+    delete ui;
 }

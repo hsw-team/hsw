@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2018-03-31T10:47:02
+# Project created by QtCreator 2018-05-12T21:45:57
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = MiniWord
+TARGET = Miniword
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -26,14 +26,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    document.cpp
+    document.cpp \
+    finddialog.cpp
 
 HEADERS += \
         mainwindow.h \
-    document.h
+    document.h \
+    finddialog.h
 
-#RC_FILE=images/logo.rc
+FORMS += \
+        mainwindow.ui \
+    finddialog.ui
 
 RESOURCES += \
-    image.qrc \
-    png.qrc
+    icons.qrc
+
+RC_ICONS = "icons/logo.ico"

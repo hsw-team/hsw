@@ -18,24 +18,6 @@ void Row::add_block()
 
     this->max_len += 100;
 }
-/*void Row::edit(char *s)
-{
-    qDebug() << "调用 edit()\n";
-    int s_len = strlen(s);
-    while (s_len >= (this->max_len - this->cur_len)) {
-        this->add_block();
-        qDebug() << "edit循环\n";
-    }
-    if (this->cur_len == 0) {
-        strcpy(this->row_text, s);
-        this->cur_len += s_len;
-    }
-    else {
-        strcat(this->row_text, s);
-        this->cur_len += s_len;
-    }
-}*/
-
 
 //=========================================================================================
 
@@ -101,20 +83,42 @@ void Document::read_file(char *s)
     string str;
     if(inputFile.open(QIODevice::ReadOnly)){
         QTextStream in(&inputFile);
+        in.setCodec(QTextCodec::codecForName("gbk"));
         while(in.readLineInto(&line_text)){
             qDebug()<<line_text;
-            str = line_text.toStdString() + "\n";
+            str = line_text.toStdString();
             this->edit((char*)str.c_str());
-            //qDebug() << "@@ " << this->cur_row->row_text << "## " << this->cur_row;
             this->add_row(this->cursor.hang);
         }
         inputFile.close();
     }
 }
 
-void Document::save_file(char *file)
+bool Document::save_file(char *s)
 {
-
+    qDebug() << "调用 read_file 函数";
+    QFile outputFile(s);
+    QString line_text;
+    Row *temp = this->first_row;
+    if(outputFile.open(QIODevice::WriteOnly | QIODevice::ReadWrite | QIODevice::Text))
+    {
+        QTextStream out(&outputFile);
+        out.setCodec(QTextCodec::codecForName("gbk"));//DEBUG！！！！！！！！！！！！！！！！！！！！！！！！！
+        while(temp)
+        {
+            line_text = temp->row_text;
+            line_text.toStdString();
+            out << line_text;
+            out << '\n';
+            temp = temp->Next_Row;
+        }
+        outputFile.close();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 //===========================================================================================
@@ -127,7 +131,7 @@ void Document::cursor_left()
         if(cursor.hang->Prev_Row){
             cursor.hang = cursor.hang->Prev_Row;
             cursor.col = cursor.hang->cur_len;
-            //MODIFIED
+            cursor.row--;
         }
     }
     else{
@@ -143,6 +147,7 @@ void Document::cursor_right()
         if(cursor.hang->Next_Row){//如果有下一行，变到下一行开头。没有下一行那就不变
             cursor.hang = cursor.hang->Next_Row;
             cursor.col = 0;
+            cursor.row++;
         }
     }
     else{
@@ -187,13 +192,5 @@ void Document::cursor_end()
     }
     cursor.col = cursor.hang->cur_len;
 }
-
-
-
-
-
-
-
-
 
 

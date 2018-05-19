@@ -23,6 +23,7 @@ class Row {
 public:
     int max_len;
     int cur_len;
+
     char *row_text;
 
     Row *Next_Row;
@@ -40,6 +41,7 @@ public:
     Row *hang;
     int row = 0;
     int col = 0;
+    int cur_height=0;
 };
 //=================整个文档================
 class Document {
@@ -52,7 +54,7 @@ public:
     void edit(char *s);
     void add_row(Row *r);
     void read_file(char *file);
-    void save_file(char *file);
+    bool save_file(char *file);
     void show_doc();
     void cursor_left();
     void cursor_right();

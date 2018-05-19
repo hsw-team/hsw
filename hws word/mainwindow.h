@@ -50,6 +50,7 @@ class MainWindow : public QMainWindow
 
 private slots:
     void Open_File();
+    void Save_All();
     void Show_Help();
     void Show_About();
     void Find_Text();
@@ -61,6 +62,7 @@ private slots:
 public:
     explicit MainWindow(QWidget *parent = 0);
     virtual void inputMethodEvent(QInputMethodEvent *a);
+    void mousePressEvent(QMouseEvent *event);
     ~MainWindow();
 
 private:

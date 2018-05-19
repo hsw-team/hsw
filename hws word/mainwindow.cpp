@@ -8,8 +8,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->setFocus();
     ui->label->setStyleSheet("qproperty-alignment: 'AlignTop | AlignLeft'; ");
+    QFont font = ui->label->font();
+    int pointsize = font.pointSize()*18/7;
+    font.setPixelSize(pointsize);
+    ui->label->setFont(font);
     ui->label->setText(qsentence);
-    ui->label_2->setGeometry(12*sentence.cursor.col-11,27*sentence.cursor.row,30,30);
+    ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
     ui->scrollArea->setWidgetResizable(true);
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");//情况2
     QTextCodec::setCodecForLocale(codec);
@@ -17,6 +21,15 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setAttribute(Qt::WA_KeyCompression);
     this->setFocusPolicy(Qt::WheelFocus);
     ui->scrollArea->setStyleSheet("background:white");
+
+    //******* connect *******
+    ui->actionOpen_O->setShortcut(QKeySequence::Open);
+    connect(ui->actionOpen_O,SIGNAL(triggered(bool)),this,SLOT(Open_File()));
+
+    connect(ui->actionMiniword,SIGNAL(triggered(bool)),this,SLOT(Show_About()));
+
+    ui->actionSave_S->setShortcut(QKeySequence::Save);
+    connect(ui->actionSave_S,SIGNAL(triggered(bool)),this,SLOT(Save_All()));
 
 }
 
@@ -28,25 +41,52 @@ void MainWindow::Open_File()
         //检查文件后缀是否为 txt 。
         QFileInfo file_info = QFileInfo(file_name);
         QString file_suffix = file_info.suffix();
-        if(file_suffix=="txt"){
+        if(file_suffix=="txt")
+        {
             qDebug()<<file_name<<endl<<file_suffix;
 
             //载入文件
             string str = file_name.toStdString();
-            //datta.read_file(char*)(str.c_str());
             this->sentence.read_file((char*)str.c_str());
+
+            //显示出来
             Row *temp = sentence.first_row;
             qsentence = "";
             while(temp)
             {
                 qsentence.append(temp->row_text);
+                qsentence.append('\n');
                 temp = temp->Next_Row;
             }
+            ui->label->setText(qsentence);
+            ui->label->adjustSize();
+            ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
+            this->setFocus();
         }
     }
     else{
         //未选中文件
         qDebug()<<"未选中文件";
+    }
+}
+//把内容保存到文件中
+void MainWindow::Save_All()
+{
+    QString filename = QFileDialog::getSaveFileName(this, tr("选择保存位置"), "", tr("*.txt")); //选择路径
+    if(filename.isEmpty())
+    {
+        return;
+    }
+    else
+    {
+        string str = filename.toStdString();
+        if(!(this->sentence.save_file((char*)str.c_str()))) //保存文档
+        {
+            QMessageBox::information(this,
+                tr("Failed to save the document"),
+                tr("Failed to save the document!"));
+            return;
+        }
     }
 }
 
@@ -160,6 +200,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
         Row *hang = sentence.cursor.hang;
         sentence.add_row(sentence.cursor.hang);
         sentence.cursor.hang = sentence.cursor.hang->Next_Row;
+        sentence.cursor.cur_height++;
         for(i = col; i < hang->cur_len; i++)
         {
                 sentence.cursor.hang->row_text[j++] = hang->row_text[i];
@@ -210,6 +251,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
                 sentence.cursor.hang->cur_len++;
             }
             sentence.cursor.row--;
+            sentence.cursor.cur_height--;
             delete temp;
         }
     }
@@ -247,6 +289,7 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
                 sentence.cursor.hang->cur_len++;
             }
             delete temp;
+            sentence.cursor.cur_height--;
         }
     }
     else if(n=="\u0012"){//左
@@ -278,8 +321,13 @@ void MainWindow::keyPressEvent(QKeyEvent *ev)//按键事件
         qsentence.append('\n');//MODIFIED
         temp = temp->Next_Row;
     }
+    QFont font = ui->label->font();
+    int pointsize = font.pointSize()*18/7;
+    font.setPixelSize(pointsize);
+    ui->label->setFont(font);
     ui->label->setText(qsentence);
-    ui->label_2->setGeometry(12*sentence.cursor.col-11,27*sentence.cursor.row,30,30);
+    ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
+    qDebug() << "当前最大行和最大列 " << sentence.cursor.hang->cur_len << "  "<<sentence.cursor.cur_height;
     ui->label->adjustSize();
     ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
     qDebug() << qsentence;
@@ -302,8 +350,72 @@ void MainWindow::inputMethodEvent(QInputMethodEvent *a)
     ui->label->setText(qsentence);
     ui->label->adjustSize();
     ui->scrollAreaWidgetContents_2->setMinimumSize(ui->label->width(),ui->label->height());
+    this->setFocus();
 }
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    // 如果是鼠标左键按下   改变指针形状，并且存储当前指针位置与窗口位置的差值.Hello Please Tina
+        if(event->button() == Qt::LeftButton){
+            for(int j = 0;j<sentence.cursor.cur_height;j++)
+            {
+                if(event->pos().y() > 26*j+98 && event->pos().y() <26*(j+1)+98)
+                {
+                    if(sentence.cursor.row < j)
+                        for(int temp = sentence.cursor.row;temp < j;temp++)
+                            sentence.cursor.hang = sentence.cursor.hang->Next_Row;
+                    else if(sentence.cursor.row >= j)
+                        for(int temp = 0;temp < sentence.cursor.row - j;temp++)
+                            sentence.cursor.hang = sentence.cursor.hang->Prev_Row;
+                    sentence.cursor.row = j;
 
+                    for(int i = 0;i<=sentence.cursor.hang->cur_len;i++)
+                    {
+                        if(event->pos().x() > (12*i-11) && event->pos().x() <= (12*(i+1)-11))
+                        {
+                            sentence.cursor.col = i-1;
+                            ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
+                            break;
+                        }
+                        else if(event->pos().x() >= 12*sentence.cursor.hang->cur_len-11)
+                        {
+                            sentence.cursor.col = sentence.cursor.hang->cur_len;
+                            ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            if(event->pos().y() >= 26*sentence.cursor.cur_height+98)
+            {
+                while(sentence.cursor.hang->Next_Row)
+                    sentence.cursor.hang = sentence.cursor.hang->Next_Row;
+                sentence.cursor.row = sentence.cursor.cur_height;
+                for(int i = 0;i<=sentence.cursor.hang->cur_len;i++)
+                {
+                    if(event->pos().x() > (12*i-11) && event->pos().x() <= (12*(i+1)-11))
+                    {
+                        sentence.cursor.col = i-1;
+                        ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
+                        break;
+                    }
+                    else if(event->pos().x() >= 12*sentence.cursor.hang->cur_len-11)
+                    {
+                        sentence.cursor.col = sentence.cursor.hang->cur_len;
+                        ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30);
+                        break;
+                    }
+                }
+            }
+            qDebug() << "Ccccursorrrr column：" << sentence.cursor.col;
+            qDebug() << "Ccccursorrrr row：" << sentence.cursor.row;
+        }
+        // 如果是鼠标右键按下
+        else if(event->button() == Qt::RightButton){
+
+        }
+        this->setFocus();
+}
 MainWindow::~MainWindow()
 {
     delete ui;

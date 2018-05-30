@@ -47,16 +47,10 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    QPalette pal;
-    qint8 cursorTimer = 0;
-
+    Document Doc;
     bool caps = false;
-    Document sentence;
-    QString qsentence;
     QVector<QLabel *> test;
-    //QLabel *test[1000];
 
-    int chi_num = 0;
     int start_x = -1, start_y = -1;//拖动鼠标时的起始坐标
     int end_x=-1,end_y=-1;//拖动鼠标后释放时的坐标
     int start_col=-1,start_row=-1;//拖动鼠标后的起始数据结构位置
@@ -69,29 +63,37 @@ class MainWindow : public QMainWindow
     bool isFirstReplace = true; // 是否第一次替换
 
 private slots:
-    void Open_File();
-    void Save_All();
-    void Save_As();//MODIFIED
-    void Show_Help();
-    void Show_About();
 
-    void Find_Text();
-    void Find(QString text);
-    void Replace_Window();
-    void Replace(QString, QString);
-    void ReplaceAll(QString, QString);
+    void window_init();
+    void slot_init();
 
-    void Block_Copy();
-    void Block_Paste();
-    void Block_Delete();
+    void open_file();
+    void save_all();
+    void save_as();
+    void show_help();
+    void show_about();
+    void new_file();
 
-    void refresh();//MODIFIED
-    void cnt_chinese();//MODIFIED
-    //void blink();
-    //void paintEvent(QPaintEvent *event);
-    //void print_cursor();
+    void find_text();
+    void find(QString text);
+    void replace_window();
+    void replace(QString, QString);
+    void replace_all(QString, QString);
+
+    void block_copy();
+    void block_paste();
+    void block_delete();
+
+    void enter_pressed();
+    void delete_pressed();
+    void backspace_pressed();
+
+    void refresh_screen();
+    void chinese_count();
+    int chinese_judge(int &col);
+
     void keyPressEvent(QKeyEvent *event);
-    //void mousePressEvent(QMouseEvent *event);
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     void pos_to_coordinate(int x, int y, bool flag);
@@ -101,6 +103,8 @@ public:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     ~MainWindow();
+
+    bool eventFilter(QObject *object, QEvent *event);
 
 private:
     Ui::MainWindow *ui;

@@ -3,7 +3,7 @@
 
 void MainWindow::add_blockshadow()
 {
-    Row *temprow = sentence.cursor.hang;
+    Row *temprow = Doc.cursor.row_ptr;
 
     int size = test.size();
     if(size <= end_row)
@@ -28,7 +28,7 @@ void MainWindow::add_blockshadow()
             if(start_row < end_row)
             {
                 qDebug() << "调用一次";
-                temprow = temprow->Prev_Row;
+                temprow = temprow->prev_row;
             }
 
         }
@@ -63,7 +63,7 @@ void MainWindow::add_blockshadow()
                 }
                 qDebug() << temprow->cur_len;
                 if(temprow)
-                    temprow = temprow->Next_Row;
+                    temprow = temprow->next_row;
             }
             else if(start_row > end_row)
             {
@@ -93,7 +93,7 @@ void MainWindow::add_blockshadow()
                 }
                 qDebug() << temprow->cur_len;
                 if(temprow)
-                    temprow = temprow->Next_Row;
+                    temprow = temprow->next_row;
             }
         }
     }
@@ -120,7 +120,7 @@ void MainWindow::add_blockshadow()
     }
     isSelectedblock = true;
 }
-void MainWindow::Block_Copy()
+void MainWindow::block_copy()
 {
     QClipboard	*board = QApplication::clipboard();
     QString		newText;
@@ -128,78 +128,78 @@ void MainWindow::Block_Copy()
     if ( start_row == end_row ) /* 只在一行 */
     {
         num_string		= fabs( start_col - end_col );
-        sentence.cursor.col	= start_col < end_col ? start_col - 1 : end_col - 1;
+        Doc.cursor.col	= start_col < end_col ? start_col - 1 : end_col - 1;
         while ( num_string-- )
         {
-            newText.append( sentence.cursor.hang->row_text[sentence.cursor.col++] );
+            newText.append( Doc.cursor.row_ptr->row_text[Doc.cursor.col++] );
         }
         board->setText( newText );
     }else if ( start_row < end_row ) /* 正选 */
     {
         int temp = end_row - start_row;
         for(int i=temp;i>0;i--)
-            sentence.cursor.hang=sentence.cursor.hang->Prev_Row;
-        sentence.cursor.row = start_row;
-        sentence.cursor.col = start_col-1;
-        while(sentence.cursor.col <=sentence.cursor.hang->cur_len)
-            newText.append(sentence.cursor.hang->row_text[sentence.cursor.col++]);
+            Doc.cursor.row_ptr=Doc.cursor.row_ptr->prev_row;
+        Doc.cursor.row_cnt = start_row;
+        Doc.cursor.col = start_col-1;
+        while(Doc.cursor.col <=Doc.cursor.row_ptr->cur_len)
+            newText.append(Doc.cursor.row_ptr->row_text[Doc.cursor.col++]);
         newText.append('\n');
-        sentence.cursor.col = 0;
-        sentence.cursor.hang=sentence.cursor.hang->Next_Row;
+        Doc.cursor.col = 0;
+        Doc.cursor.row_ptr=Doc.cursor.row_ptr->next_row;
         for(int i=1;i<temp;i++)
         {
-            newText.append(sentence.cursor.hang->row_text);
+            newText.append(Doc.cursor.row_ptr->row_text);
             newText.append('\n');
-            sentence.cursor.hang=sentence.cursor.hang->Next_Row;
+            Doc.cursor.row_ptr=Doc.cursor.row_ptr->next_row;
         }
-        while(sentence.cursor.col < end_col-1)
-            newText.append(sentence.cursor.hang->row_text[sentence.cursor.col++]);
-        sentence.cursor.row = end_row;
-        sentence.cursor.col = end_col-1;
+        while(Doc.cursor.col < end_col-1)
+            newText.append(Doc.cursor.row_ptr->row_text[Doc.cursor.col++]);
+        Doc.cursor.row_cnt = end_row;
+        Doc.cursor.col = end_col-1;
         board->setText(newText);
     }else  { /* 倒选 */
         int temp = end_row - start_row;
 
-        while(sentence.cursor.col <=sentence.cursor.hang->cur_len)
-            newText.append(sentence.cursor.hang->row_text[sentence.cursor.col++]);
+        while(Doc.cursor.col <=Doc.cursor.row_ptr->cur_len)
+            newText.append(Doc.cursor.row_ptr->row_text[Doc.cursor.col++]);
         newText.append('\n');
-        sentence.cursor.col = 0;
-        sentence.cursor.hang=sentence.cursor.hang->Next_Row;
+        Doc.cursor.col = 0;
+        Doc.cursor.row_ptr=Doc.cursor.row_ptr->next_row;
         for(int i=1;i<temp;i++)
         {
-            newText.append(sentence.cursor.hang->row_text);
+            newText.append(Doc.cursor.row_ptr->row_text);
             newText.append('\n');
-            sentence.cursor.hang=sentence.cursor.hang->Next_Row;
+            Doc.cursor.row_ptr=Doc.cursor.row_ptr->next_row;
         }
-        while(sentence.cursor.col < start_col-1)
-            newText.append(sentence.cursor.hang->row_text[sentence.cursor.col++]);
+        while(Doc.cursor.col < start_col-1)
+            newText.append(Doc.cursor.row_ptr->row_text[Doc.cursor.col++]);
         for(int i=temp;i>0;i--)
-            sentence.cursor.hang=sentence.cursor.hang->Next_Row;
-        sentence.cursor.row = end_row;
-        sentence.cursor.col = end_col-1;
+            Doc.cursor.row_ptr=Doc.cursor.row_ptr->next_row;
+        Doc.cursor.row_cnt = end_row;
+        Doc.cursor.col = end_col-1;
         board->setText(newText);
     }
 }
 
 
-void MainWindow::Block_Paste()
+void MainWindow::block_paste()
 {
     if(isSelectedblock)
-        Block_Delete();
+        block_delete();
     qDebug() << "调用 BLOCK_PASTE";
     QClipboard *board = QApplication::clipboard();
     QString clip_str = board->text();
     string s = clip_str.toStdString();
 
     int tmp = 0, ch_cnt = 0;
-    for(int i = sentence.cursor.col; i < sentence.cursor.hang->cur_len; i++) {
-        s += sentence.cursor.hang->row_text[i];
-        if (sentence.cursor.hang->row_text[i] < 0)
+    for(int i = Doc.cursor.col; i < Doc.cursor.row_ptr->cur_len; i++) {
+        s += Doc.cursor.row_ptr->row_text[i];
+        if (Doc.cursor.row_ptr->row_text[i] < 0)
             ch_cnt++;
         tmp++;
-        sentence.cursor.hang->row_text[i] = '\0';
+        Doc.cursor.row_ptr->row_text[i] = '\0';
     }
-    sentence.cursor.hang->cur_len -= tmp;
+    Doc.cursor.row_ptr->cur_len -= tmp;
 
     //需要改粘贴多行的情况
     //'\n'的分开
@@ -216,24 +216,24 @@ void MainWindow::Block_Paste()
     }
     if (buff != "") v.push_back(buff);
     for (auto n:v) {
-        this->sentence.edit((char *) n.c_str());
-        sentence.add_row(sentence.cursor.hang);
-        sentence.cursor_down();
-        sentence.cursor.cur_height++;
+        this->Doc.insert_text((char *) n.c_str());
+        Doc.new_row(Doc.cursor.row_ptr);
+        Doc.cursor_down();
+        Doc.cursor.cur_height++;
     }
-    sentence.delete_row(sentence.cursor.hang);
-    sentence.cursor.cur_height--;
+    Doc.delete_row(Doc.cursor.row_ptr);
+    Doc.cursor.cur_height--;
     for(int i = 0; i <= tmp - (ch_cnt/3) * 2; i++){
-        sentence.cursor_left();
+        Doc.cursor_left();
     }
 
     //刷新
-    refresh();
+    refresh_screen();
 
 }
 
 
-void MainWindow::Block_Delete()
+void MainWindow::block_delete()
 {
     qDebug() << "调用 BLOCK_DELETE";
     int	num_string	= 0;
@@ -241,73 +241,73 @@ void MainWindow::Block_Delete()
     if ( times == 0 )
     {
         num_string		= fabs( start_col - end_col );
-        sentence.cursor.col	= start_col > end_col ? start_col - 1 : end_col - 1;
+        Doc.cursor.col	= start_col > end_col ? start_col - 1 : end_col - 1;
         while ( num_string-- )
         {
             int mov = 1;
-            if ( sentence.cursor.hang->row_text[sentence.cursor.col - 1] < 0 )
+            if ( Doc.cursor.row_ptr->row_text[Doc.cursor.col - 1] < 0 )
                 mov = 3;
-            for ( int i = sentence.cursor.col - mov; i <= sentence.cursor.hang->cur_len - mov; i++ )
+            for ( int i = Doc.cursor.col - mov; i <= Doc.cursor.row_ptr->cur_len - mov; i++ )
             {
-                sentence.cursor.hang->row_text[i]	= sentence.cursor.hang->row_text[i + mov];
-                sentence.cursor.hang->row_text[i + mov] = '\0';
+                Doc.cursor.row_ptr->row_text[i]	= Doc.cursor.row_ptr->row_text[i + mov];
+                Doc.cursor.row_ptr->row_text[i + mov] = '\0';
             }
-            sentence.cursor.col		-= mov;
-            sentence.cursor.hang->cur_len	-= mov;
-            sentence.isModified		= true;
+            Doc.cursor.col		-= mov;
+            Doc.cursor.row_ptr->cur_len	-= mov;
+            Doc.isModified		= true;
         }
     } else if ( times == 1 )
     {
         if ( end_row < start_row )              /* 倒选 */
         {
-            num_string		+= (sentence.cursor.hang->cur_len + 1 - end_col);
-            sentence.cursor.hang	= sentence.cursor.hang->Next_Row;
+            num_string		+= (Doc.cursor.row_ptr->cur_len + 1 - end_col);
+            Doc.cursor.row_ptr	= Doc.cursor.row_ptr->next_row;
             num_string		+= start_col;
-            sentence.cursor.row	= start_row;
-            sentence.cursor.col	= start_col - 1;
+            Doc.cursor.row_cnt	= start_row;
+            Doc.cursor.col	= start_col - 1;
         } else {                                /* 正选 */
             num_string	+= end_col;
-            num_string	+= (sentence.cursor.hang->Prev_Row->cur_len + 1 - start_col);
+            num_string	+= (Doc.cursor.row_ptr->prev_row->cur_len + 1 - start_col);
         }
         while ( num_string-- )
         {
-            if ( sentence.cursor.col > 0 )  /* 当指针不在行首的时候(之前有字符可以删除) */
+            if ( Doc.cursor.col > 0 )  /* 当指针不在行首的时候(之前有字符可以删除) */
             {
                 /* 判断中文字符 */
                 int mov = 1;
-                if ( sentence.cursor.hang->row_text[sentence.cursor.col - 1] < 0 )
+                if ( Doc.cursor.row_ptr->row_text[Doc.cursor.col - 1] < 0 )
                     mov = 3;
-                for ( int i = sentence.cursor.col - mov; i <= sentence.cursor.hang->cur_len - mov; i++ )
+                for ( int i = Doc.cursor.col - mov; i <= Doc.cursor.row_ptr->cur_len - mov; i++ )
                 {
-                    sentence.cursor.hang->row_text[i]	= sentence.cursor.hang->row_text[i + mov];
-                    sentence.cursor.hang->row_text[i + mov] = '\0';
+                    Doc.cursor.row_ptr->row_text[i]	= Doc.cursor.row_ptr->row_text[i + mov];
+                    Doc.cursor.row_ptr->row_text[i + mov] = '\0';
                 }
-                sentence.cursor.col		-= mov;
-                sentence.cursor.hang->cur_len	-= mov;
-                sentence.isModified		= true;
-            } else if ( sentence.cursor.col == 0 &&
-                    sentence.cursor.hang != sentence.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
+                Doc.cursor.col		-= mov;
+                Doc.cursor.row_ptr->cur_len	-= mov;
+                Doc.isModified		= true;
+            } else if ( Doc.cursor.col == 0 &&
+                    Doc.cursor.row_ptr != Doc.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
             {
-                Row *temp = sentence.cursor.hang;
-                sentence.cursor.hang = temp->Prev_Row;
-                if ( temp->Next_Row )
+                Row *temp = Doc.cursor.row_ptr;
+                Doc.cursor.row_ptr = temp->prev_row;
+                if ( temp->next_row )
                 {
-                    temp->Next_Row->Prev_Row = sentence.cursor.hang;
+                    temp->next_row->prev_row = Doc.cursor.row_ptr;
                 }
-                sentence.cursor.hang->Next_Row	= temp->Next_Row;
-                sentence.cursor.col		= sentence.cursor.hang->cur_len;
+                Doc.cursor.row_ptr->next_row	= temp->next_row;
+                Doc.cursor.col		= Doc.cursor.row_ptr->cur_len;
                 /* 需要把之后行的加到后面 */
                 int	i	= 0;
-                int	col	= sentence.cursor.col;
+                int	col	= Doc.cursor.col;
                 while ( i < temp->cur_len )
                 {
-                    sentence.cursor.hang->row_text[col++] = temp->row_text[i++];
-                    sentence.cursor.hang->cur_len++;
+                    Doc.cursor.row_ptr->row_text[col++] = temp->row_text[i++];
+                    Doc.cursor.row_ptr->cur_len++;
                 }
-                sentence.cursor.row--;
-                sentence.cursor.cur_height--;
+                Doc.cursor.row_cnt--;
+                Doc.cursor.cur_height--;
                 delete temp;
-                sentence.isModified = true;
+                Doc.isModified = true;
             }
         }
     } else if ( times > 1 )
@@ -317,69 +317,69 @@ void MainWindow::Block_Delete()
         {
             while ( temp > 1 )
             {
-                sentence.delete_row( sentence.cursor.hang->Next_Row );
-                sentence.cursor.cur_height--;
+                Doc.delete_row( Doc.cursor.row_ptr->next_row );
+                Doc.cursor.cur_height--;
                 start_row--;
                 temp--;
             }
-            num_string		+= (sentence.cursor.hang->cur_len + 1 - end_col);
-            sentence.cursor.hang	= sentence.cursor.hang->Next_Row;
+            num_string		+= (Doc.cursor.row_ptr->cur_len + 1 - end_col);
+            Doc.cursor.row_ptr	= Doc.cursor.row_ptr->next_row;
             num_string		+= start_col;
-            sentence.cursor.row	= start_row;
-            sentence.cursor.col	= start_col - 1;
+            Doc.cursor.row_cnt	= start_row;
+            Doc.cursor.col	= start_col - 1;
         } else { /* 正选 */
             int temp = times;
             while ( temp > 1 )
             {
-                sentence.delete_row( sentence.cursor.hang->Prev_Row );
-                sentence.cursor.cur_height--;
+                Doc.delete_row( Doc.cursor.row_ptr->prev_row );
+                Doc.cursor.cur_height--;
                 end_row--;
                 temp--;
             }
             num_string		+= end_col;
-            num_string		+= (sentence.cursor.hang->Prev_Row->cur_len + 1 - start_col);
-            sentence.cursor.row	= end_row;
-            sentence.cursor.col	= end_col - 1;
+            num_string		+= (Doc.cursor.row_ptr->prev_row->cur_len + 1 - start_col);
+            Doc.cursor.row_cnt	= end_row;
+            Doc.cursor.col	= end_col - 1;
         }
         while ( num_string-- )
         {
-            if ( sentence.cursor.col > 0 ) /* 当指针不在行首的时候(之前有字符可以删除) */
+            if ( Doc.cursor.col > 0 ) /* 当指针不在行首的时候(之前有字符可以删除) */
             {
                 /* 判断中文字符 */
                 int mov = 1;
-                if ( sentence.cursor.hang->row_text[sentence.cursor.col - 1] < 0 )
+                if ( Doc.cursor.row_ptr->row_text[Doc.cursor.col - 1] < 0 )
                     mov = 3;
-                for ( int i = sentence.cursor.col - mov; i <= sentence.cursor.hang->cur_len - mov; i++ )
+                for ( int i = Doc.cursor.col - mov; i <= Doc.cursor.row_ptr->cur_len - mov; i++ )
                 {
-                    sentence.cursor.hang->row_text[i]	= sentence.cursor.hang->row_text[i + mov];
-                    sentence.cursor.hang->row_text[i + mov] = '\0';
+                    Doc.cursor.row_ptr->row_text[i]	= Doc.cursor.row_ptr->row_text[i + mov];
+                    Doc.cursor.row_ptr->row_text[i + mov] = '\0';
                 }
-                sentence.cursor.col		-= mov;
-                sentence.cursor.hang->cur_len	-= mov;
-                sentence.isModified		= true;
-            } else if ( sentence.cursor.col == 0 &&
-                    sentence.cursor.hang != sentence.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
+                Doc.cursor.col		-= mov;
+                Doc.cursor.row_ptr->cur_len	-= mov;
+                Doc.isModified		= true;
+            } else if ( Doc.cursor.col == 0 &&
+                    Doc.cursor.row_ptr != Doc.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
             {
-                Row *temp = sentence.cursor.hang;
-                sentence.cursor.hang = temp->Prev_Row;
-                if ( temp->Next_Row )
+                Row *temp = Doc.cursor.row_ptr;
+                Doc.cursor.row_ptr = temp->prev_row;
+                if ( temp->next_row )
                 {
-                    temp->Next_Row->Prev_Row = sentence.cursor.hang;
+                    temp->next_row->prev_row = Doc.cursor.row_ptr;
                 }
-                sentence.cursor.hang->Next_Row	= temp->Next_Row;
-                sentence.cursor.col		= sentence.cursor.hang->cur_len;
+                Doc.cursor.row_ptr->next_row	= temp->next_row;
+                Doc.cursor.col		= Doc.cursor.row_ptr->cur_len;
                 /* 需要把之后行的加到后面 */
                 int	i	= 0;
-                int	col	= sentence.cursor.col;
+                int	col	= Doc.cursor.col;
                 while ( i < temp->cur_len )
                 {
-                    sentence.cursor.hang->row_text[col++] = temp->row_text[i++];
-                    sentence.cursor.hang->cur_len++;
+                    Doc.cursor.row_ptr->row_text[col++] = temp->row_text[i++];
+                    Doc.cursor.row_ptr->cur_len++;
                 }
-                sentence.cursor.row--;
-                sentence.cursor.cur_height--;
+                Doc.cursor.row_cnt--;
+                Doc.cursor.cur_height--;
                 delete temp;
-                sentence.isModified = true;
+                Doc.isModified = true;
             }
         }
     }
@@ -390,5 +390,5 @@ void MainWindow::Block_Delete()
     isSelectedblock = false;
 
     start_x = start_y =end_x=end_y=end_col=end_row=start_col=start_row=-1;
-    refresh();
+    refresh_screen();
 }

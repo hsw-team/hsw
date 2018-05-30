@@ -21,43 +21,43 @@
 //==================行===================
 class Row {
 public:
-    char *row_text;
-    Row *Next_Row;
-    Row *Prev_Row;
-
     int max_len;
     int cur_len;
+    char *row_text;
+    Row *next_row;
+    Row *prev_row;
 
     Row();
-    void add_block();
+    void expand_block();
+
 };
 
 //=================文档光标================
 class Cursor {
 public:
-    Row *hang;
-    int row = 0;
-    int col = 0;
+    Row *row_ptr;
+    int col;
+    int row_cnt = 0;
     int cur_height=0;
+    int chi_cnt = 0;
 
-    int chi_cnt;
 };
-//=================整个文档================
+
+//=================文档对象================
 class Document {
 public:
-    bool isModified;
-    Row *first_row;
-    Row *cur_row;
     Cursor cursor;
-    QString file_name;//MODIFIED
+    Row *first_row;
+    QString file_name;
+    bool isModified;
 
     Document();
-    void edit(const char *s);
-    void add_row(Row *r);
+    void clear_all();
+    void insert_text(const char *s);
+    void new_row(Row *r);
     void delete_row(Row *ptr);
     void read_file(char *file);
     bool save_file(char *file);
-
     void cursor_left();
     void cursor_right();
     void cursor_up();
@@ -65,7 +65,6 @@ public:
     void cursor_home();
     void cursor_end();
 
-    void clear_all();//MODIFIED
-
 };
+
 #endif // DOCUMENT_H

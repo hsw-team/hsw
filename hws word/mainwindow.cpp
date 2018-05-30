@@ -5,123 +5,138 @@ MainWindow::MainWindow( QWidget *parent ) :
     QMainWindow( parent ),
     ui( new Ui::MainWindow )
 {
+    window_init();
+    slot_init();
+    refresh_screen();
+}
+
+void MainWindow::window_init()
+{
     ui->setupUi( this );
-    this->setFocus();
-    this->setMouseTracking( true );
+    this->setWindowTitle( "MiniWord Editor" );
+
+    this->installEventFilter(this);
+    ui->label_2->setAttribute(Qt::WA_ShowWithoutActivating,true);
+
     ui->label->setStyleSheet( "qproperty-alignment: 'AlignTop | AlignLeft'; " );
-
-//    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect();
-//    effect->setOpacity( 0.6 );
-//    for ( int i = 0; i < 1000; i++ )
-//    {
-//        test[i] = new QLabel( ui->scrollAreaWidgetContents_2 );
-//        test[i]->setFixedSize( 24, 26 );
-//        test[i]->setGeometry( -10, -40, 12, 26 );
-//        test[i]->setGraphicsEffect( effect );
-//    }
-    //ui->scrollAreaWidgetContents_2->resize();
-
-    QFont	font		= ui->label->font();
-    int	pointsize	= font.pointSize() * 18 / 7;
+    QFont font = ui->label->font();
+    int	pointsize = font.pointSize() * 18 / 7;
     font.setPixelSize( pointsize );
     ui->label->setFont( font );
-    ui->label->setText( qsentence );
-    ui->label_2->setGeometry( 12 * sentence.cursor.col - 11, 26 * sentence.cursor.row, 30, 30 );
+    ui->label->setText( "" );
+    ui->label_2->setGeometry( 12 * Doc.cursor.col - 11, 26 * Doc.cursor.row_cnt, 30, 30 );
+
     ui->scrollArea->setWidgetResizable( true );
-    QTextCodec *codec = QTextCodec::codecForName( "UTF-8" ); /* 情况2 */
-    QTextCodec::setCodecForLocale( codec );
-    this->setAttribute( Qt::WA_InputMethodEnabled );
-    this->setAttribute( Qt::WA_KeyCompression );
-    this->setFocusPolicy( Qt::WheelFocus );
     ui->scrollArea->setStyleSheet( "background:white" );
+    QTextCodec *codec = QTextCodec::codecForName( "UTF-8" );
+    QTextCodec::setCodecForLocale( codec );
 
+    this->setMouseTracking( true );
+    this->setAttribute( Qt::WA_KeyCompression );
+    this->setAttribute( Qt::WA_InputMethodEnabled );
+    ui->label_2->setAttribute(Qt::WA_ShowWithoutActivating,true);
 
-    /* ******* connect ******* */
-    ui->actionOpen_O->setShortcut( QKeySequence::Open );
-    connect( ui->actionOpen_O, SIGNAL( triggered( bool ) ), this, SLOT( Open_File() ) );
-
-    connect( ui->actionMiniword, SIGNAL( triggered( bool ) ), this, SLOT( Show_About() ) );
-
-    ui->actionSave_S->setShortcut( QKeySequence::Save );
-    connect( ui->actionSave_S, SIGNAL( triggered( bool ) ), this, SLOT( Save_All() ) );
-
-    ui->actionPaste_P->setShortcut( QKeySequence::Copy );
-    connect( ui->actionCopy_C, SIGNAL( triggered( bool ) ), this, SLOT( Block_Copy() ) );
-
-    ui->actionPaste_P->setShortcut( QKeySequence::Paste );
-    connect( ui->actionPaste_P, SIGNAL( triggered( bool ) ), this, SLOT( Block_Paste() ) );
-
-    connect( ui->actionSave_as, SIGNAL( triggered( bool ) ), this, SLOT( Save_As() ) ); /* MODIFIED */
     /* 一些初始化时应该默认关闭的操作 */
     ui->actionUndo_Z->setEnabled( false );
     ui->actionRedo_Y->setEnabled( false );
-    /* 连接 */
-    connect( ui->actionFind_F, SIGNAL( triggered() ), this, SLOT( Find_Text() ) );
-    connect( &f, SIGNAL( FindSignal( QString ) ), this, SLOT( Find( QString ) ) );
-    connect( ui->actionreplace_R, SIGNAL( triggered() ), this, SLOT( Replace_Window() ) );
-    connect( &r, SIGNAL( findSignal( QString ) ), this, SLOT( Find( QString ) ) );
-    connect( &r, SIGNAL( replaceSignal( QString, QString ) ), this, SLOT( Replace( QString, QString ) ) );
-    connect(&r, SIGNAL(replaceAllSignal(QString,QString)), this, SLOT(ReplaceAll(QString,QString)));
+
+    this->setFocus();
 }
 
-
-void MainWindow::refresh()
+void MainWindow::slot_init()
 {
-    if ( sentence.file_name.isEmpty() )
-    {
+    // NEW FILE
+    ui->actionNew_N->setShortcut(QKeySequence::New);
+    connect(ui->actionNew_N, SIGNAL(triggered(bool)), this, SLOT(new_file()));
+
+    // OPEN FILE
+    ui->actionOpen_O->setShortcut( QKeySequence::Open );
+    connect( ui->actionOpen_O, SIGNAL( triggered( bool ) ), this, SLOT( open_file() ) );
+
+    // SAVE ACTIONS
+    ui->actionSave_S->setShortcut( QKeySequence::Save );
+    connect( ui->actionSave_S, SIGNAL( triggered( bool ) ), this, SLOT( save_all() ) );
+    connect( ui->actionSave_as, SIGNAL( triggered( bool ) ), this, SLOT( save_as() ) );
+
+    // BLOCK ACTIONS
+    ui->actionPaste_P->setShortcut( QKeySequence::Copy );
+    connect( ui->actionCopy_C, SIGNAL( triggered( bool ) ), this, SLOT( block_copy() ) );
+    ui->actionPaste_P->setShortcut( QKeySequence::Paste );
+    connect( ui->actionPaste_P, SIGNAL( triggered( bool ) ), this, SLOT( block_paste() ) );
+
+    // SHOW ABOUT
+    connect( ui->actionMiniword, SIGNAL( triggered( bool ) ), this, SLOT( show_about() ) );
+
+    // FIND & REPLACE
+    connect( ui->actionFind_F, SIGNAL( triggered() ), this, SLOT( find_text() ) );
+    connect( &f, SIGNAL( FindSignal( QString ) ), this, SLOT( find( QString ) ) );
+    connect( ui->actionreplace_R, SIGNAL( triggered() ), this, SLOT( replace_window() ) );
+    connect( &r, SIGNAL( findSignal( QString ) ), this, SLOT( find( QString ) ) );
+    connect( &r, SIGNAL( replaceSignal( QString, QString ) ), this, SLOT( replace( QString, QString ) ) );
+    connect(&r, SIGNAL(replaceAllSignal(QString,QString)), this, SLOT(replace_all(QString,QString)));
+
+}
+
+void MainWindow::refresh_screen()
+{
+    //显示窗口文件名
+    if ( Doc.file_name.isEmpty() )
         this->setWindowTitle( "Untitled - MiniWord" );
-    } else {
-        QFileInfo file_info = QFileInfo( sentence.file_name );
+    else {
+        QFileInfo file_info = QFileInfo( Doc.file_name );
         this->setWindowTitle( file_info.fileName() + " - MiniWord" );
     }
-    cnt_chinese();
-    Row *temp = sentence.first_row;
-    qsentence = "";
+    Row *temp = Doc.first_row;
+    QString output_string = "";
     while ( temp )
     {
-        qsentence.append( temp->row_text );
-        qsentence.append( '\n' );
-        temp = temp->Next_Row;
+        output_string.append( temp->row_text );
+        output_string.append( '\n' );
+        temp = temp->next_row;
     }
-    //
-    //当输入字超出当前画面大小时，使光标跟随
-    //
-//    while(12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11 > ui->scrollArea->horizontalScrollBar()->value() + ui->scrollArea->width()-ui->scrollArea->verticalScrollBar()->width())
-//        ui->scrollArea->horizontalScrollBar()->setValue(ui->scrollArea->horizontalScrollBar()->value()+12);
-//    while(26 * sentence.cursor.row > ui->scrollArea->verticalScrollBar()->value() + ui->scrollArea->height() - ui->scrollArea->horizontalScrollBar()->height())
-//        ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->value()+26);
+
+    chinese_count();
+
     qDebug() << "窗口值" << ui->scrollArea->width()<<ui->scrollArea->height();
-    ui->label->setText( qsentence );
+    ui->label->setText( output_string );
     ui->label->adjustSize();
-    ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11, 26 * sentence.cursor.row,
-                  30, 30 );
+    ui->label_2->setGeometry( 12 * (Doc.cursor.col - Doc.cursor.chi_cnt * 1.08) - 11, 26 * Doc.cursor.row_cnt, 30, 30 );
     ui->scrollAreaWidgetContents_2->setMinimumSize( ui->label->width(), ui->label->height() );
+
     this->setFocus();
 
-    qDebug() << "\n当前行 - cur_len:" << sentence.cursor.hang->cur_len << " max_len:" << sentence.cursor.hang->max_len;
-    qDebug()	<< "光标 - hang:" << sentence.cursor.hang << "col:" << sentence.cursor.col << " row:" << sentence.cursor.row
-            << " chi_cnt:" << sentence.cursor.chi_cnt;
-    qDebug() << "修改 - Modified:" << sentence.isModified;
+    qDebug() << "\n当前行 - cur_len:" << Doc.cursor.row_ptr->cur_len << " max_len:" << Doc.cursor.row_ptr->max_len;
+    qDebug() << "光标 - hang:" << Doc.cursor.row_ptr << "col:" << Doc.cursor.col << " row:" << Doc.cursor.row_cnt << " chi_cnt:" << Doc.cursor.chi_cnt;
+    qDebug() << "修改 - Modified:" << Doc.isModified;
 }
 
-
-void MainWindow::cnt_chinese()
+void MainWindow::chinese_count()
 {
-    qDebug() << "运行了cnt_Chinese";
-    int cnt = 0;
-    for ( int i = 0; i < sentence.cursor.col; i++ )
-        if ( sentence.cursor.hang->row_text[i] < 0 )
-            cnt++;
-    cnt			/= 3;
-    sentence.cursor.chi_cnt = cnt;
+    qDebug() << "运行了chinese_count";
+    Doc.cursor.chi_cnt = chinese_judge(Doc.cursor.col);
 }
 
-
-void MainWindow::Open_File()
+int MainWindow::chinese_judge(int &col)
 {
-    /* 如果当前有没保存的先保存 */
-    if ( sentence.isModified )
-    {
+    //自动加减得到Cursor.col考虑中文应该的位置
+    //返回的是Cursor.col之前中文的个数
+    qDebug() << "运行了chinese_judge";
+    int chi_cnt = 0;
+    for ( int i = 0; i < Doc.cursor.col; i++ )
+        if ( Doc.cursor.row_ptr->row_text[i] < 0 )
+            chi_cnt++;
+    int n = chi_cnt % 3;
+    while( n && Doc.cursor.col){
+        n--;
+        col--;
+    }
+    return chi_cnt/3;
+}
+
+void MainWindow::open_file()
+{
+    // 如果当前有没保存的先保存
+    if ( Doc.isModified ){
         const QMessageBox::StandardButton ret
             = QMessageBox::warning( this, tr( "Application" ),
                         tr( "当前文档未保存，是否保存?" ),
@@ -129,10 +144,10 @@ void MainWindow::Open_File()
         switch ( ret )
         {
         case QMessageBox::Save:
-            Save_All();
+            save_all();
             break;
         case QMessageBox::Discard:
-            sentence.clear_all();
+            Doc.clear_all();
             break;
         case QMessageBox::Cancel:
             return;
@@ -140,60 +155,77 @@ void MainWindow::Open_File()
             return;
         }
     }
-    /* 打开新的文档 */
+    // 打开新的文档
     QString tmp_file_name = QFileDialog::getOpenFileName( this );
-    /*选择的文件不为空 */
-    if ( !tmp_file_name.isEmpty() )
-    {
-        /* 检查文件后缀是否为 txt 。 */
-        QFileInfo	file_info	= QFileInfo( tmp_file_name );
-        QString		file_suffix	= file_info.suffix();
-        if ( file_suffix == "txt" )
-        {
-            qDebug() << tmp_file_name << endl << file_suffix;
-
-            /* 载入文件 */
+    //选择的文件不为空
+    if ( !tmp_file_name.isEmpty() ){
+        // 检查文件后缀是否为 txt
+        QFileInfo file_info	= QFileInfo( tmp_file_name );
+        QString file_suffix	= file_info.suffix();
+        if ( file_suffix == "txt" ){
+            //载入文件
             string str = tmp_file_name.toStdString();
-            this->sentence.read_file( (char *) str.c_str() );
-            sentence.file_name = tmp_file_name;
+            this->Doc.read_file( (char *) str.c_str() );
+            Doc.file_name = tmp_file_name;
 
-            /* 刷新 */
-            refresh();
+            refresh_screen();
         }
-    } else {
-        /* 未选中文件 */
+    }
+    else{
         qDebug() << "未选中文件";
     }
 }
 
-
 /* 把内容保存到文件中 */
-void MainWindow::Save_All()
+void MainWindow::save_all()
 {
-    if ( sentence.file_name.isEmpty() )
-    {
-        sentence.file_name = QFileDialog::getSaveFileName( this, tr( "选择保存位置" ), "", tr( "*.txt" ) );   /*选择路径 */
-    }
-
-    string str = sentence.file_name.toStdString();
-    if ( !(this->sentence.save_file( (char *) str.c_str() ) ) )                                             /* 保存文档 */
-    {
+    //如果没有默认路径，选择保存路径
+    if ( Doc.file_name.isEmpty() )
+        Doc.file_name = QFileDialog::getSaveFileName( this, tr( "选择保存位置" ), "", tr( "*.txt" ) );
+    //保存
+    string str = Doc.file_name.toStdString();
+    if (!(this->Doc.save_file( (char *) str.c_str()))){
         QMessageBox::information( this,
-                      tr( "Failed to save the document" ),
-                      tr( "Failed to save the document!" ) );
+                      tr( "保存结果" ),
+                      tr( "文件保存失败!" ) );
         return;
     }
-    refresh();
+    refresh_screen();
 }
 
-
-void MainWindow::Save_As() /* MODIFIED */
+void MainWindow::save_as()
 {
-    sentence.file_name = "";
-    Save_All();
-    refresh();
+    Doc.file_name = "";
+    save_all();
+    refresh_screen();
 }
 
+void MainWindow::new_file()
+{
+    //如果有未保存的修改，先提示是否保存
+    if (this->Doc.isModified) {
+        const QMessageBox::StandardButton ret
+                = QMessageBox::warning(this, tr("Application"),
+                                       tr("当前文档未保存，是否保存?"),
+                                       QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        switch (ret) {
+            case QMessageBox::Save:
+                save_all();
+                Doc.clear_all();
+                break;
+            case QMessageBox::Discard:
+                Doc.clear_all();
+                break;
+            case QMessageBox::Cancel:
+                break;
+            default:
+                break;
+        }
+
+    }
+    refresh_screen();
+
+}
 
 /*
  * ===================重要问题=====================
@@ -249,24 +281,20 @@ void MainWindow::Save_As() /* MODIFIED */
  * ***************************************************/
 
 
-
-
-/* 查找文本 函数 */
-void MainWindow::Find_Text()
+void MainWindow::find_text()
 {
     found = false;
     notExist = false;
     qDebug() << "\n打开查找窗口\n" << endl;
-//    f.exec();
-    f.show();
 
+    f.show();
 }
 
-void MainWindow::Find(QString text){
+void MainWindow::find(QString text){
     qDebug() << "\n查找功能可用" << endl;
     qDebug() << "text = " << text << endl;
-    Row *cur_row = sentence.cursor.hang; // 定位查找起始行
-    int col = sentence.cursor.col; //查找起始位置
+    Row *cur_row = Doc.cursor.row_ptr; // 定位查找起始行
+    int col = Doc.cursor.col; //查找起始位置
     int pos = -1; //查找位置，初始化为-1
     QString words = "";
 
@@ -302,7 +330,7 @@ void MainWindow::Find(QString text){
         int row_to_plus = 0;
         while(cur_row != NULL && pos == -1){
             found = false;
-            cur_row = cur_row->Next_Row;
+            cur_row = cur_row->next_row;
             if(cur_row == NULL)
                 break;
             col = 0;
@@ -338,15 +366,15 @@ void MainWindow::Find(QString text){
 
         else if(pos != -1){
             found = true;
-            sentence.cursor.hang = cur_row;
+            Doc.cursor.row_ptr = cur_row;
             Q_ASSERT(cur_row != NULL);
-            sentence.cursor.row += row_to_plus;
-            sentence.cursor.col = pos; //移动光标到第一个查找成功的位
-            col = sentence.cursor.col; // 更新col
-            ui->label_2->setGeometry(12*sentence.cursor.col-11,26*sentence.cursor.row,30,30); //绘制光标
+            Doc.cursor.row_cnt += row_to_plus;
+            Doc.cursor.col = pos; //移动光标到第一个查找成功的位
+            col = Doc.cursor.col; // 更新col
+            ui->label_2->setGeometry(12*Doc.cursor.col-11,26*Doc.cursor.row_cnt,30,30); //绘制光标
 
-            start_col = sentence.cursor.col + 1;
-            start_row = sentence.cursor.row;
+            start_col = Doc.cursor.col + 1;
+            start_row = Doc.cursor.row_cnt;
             end_col = start_col + text.length();
             end_row = start_row;
 
@@ -358,13 +386,13 @@ void MainWindow::Find(QString text){
 }
 
 // 打开替换窗口
-void MainWindow:: Replace_Window(){
+void MainWindow:: replace_window(){
     isFirstReplace = true;
     r.exec();
 }
 
 // 替换
-void MainWindow:: Replace(QString target, QString value){
+void MainWindow:: replace(QString target, QString value){
     // target: 查找文本
     // value: 应替换的文本
 
@@ -372,7 +400,7 @@ void MainWindow:: Replace(QString target, QString value){
     if(isFirstReplace && !isSelectedblock){
         found = false;
         notExist = false;
-        Find(target);//执行查找操作
+        find(target);//执行查找操作
         isFirstReplace = false;
 
         qDebug() << "第一次替换"  << endl;
@@ -380,55 +408,51 @@ void MainWindow:: Replace(QString target, QString value){
     else{
         //先删除target
         qDebug() << "不是第一次替换" << endl;
-        Block_Delete();
+        block_delete();
         isSelectedblock = false;
         found = false; // 替换后当前为未查找成功状态
 
         // 加上value
         std::string words = value.toStdString();
         const char* s = words.c_str();
-        sentence.edit(s);
+        Doc.insert_text(s);
 
-        refresh();
+        refresh_screen();
 
         //查找下一个
-        Find(target);
+        find(target);
 
 
     }
 
 }
 
-void MainWindow::ReplaceAll(QString target, QString value){
+void MainWindow::replace_all(QString target, QString value){
    // qDebug() << "replace all " << endl;
     while(!notExist){
-        Replace(target, value);
+        replace(target, value);
     }
 
     notExist = false;
 }
 
-
 /* 显示 Help 函数 */
-void MainWindow::Show_Help()
+void MainWindow::show_help()
 {
     QMessageBox::information( this, tr( "帮助" ), tr( "编辑文档。" ) );
 }
 
-
 /* 显示 About 函数 */
-void MainWindow::Show_About()
+void MainWindow::show_about()
 {
     QMessageBox::about( this, tr( "关于 MiniWord" ), tr( "欢迎您的使用!\n"
                                "此程序 MiniWord 由 Daoxu Sheng, Weiran Huang\n 以及 Zengrui Wang 共同开发完成。" ) );
 }
 
-
-/* 主窗口关闭 函数 */
+/* 主窗口 关闭 函数 */
 void MainWindow::closeEvent( QCloseEvent *event )
 {
-    if ( this->sentence.isModified )
-    {
+    if (this->Doc.isModified){
         const QMessageBox::StandardButton ret
             = QMessageBox::warning( this, tr( "Application" ),
                         tr( "当前文档未保存，是否保存?" ),
@@ -436,7 +460,7 @@ void MainWindow::closeEvent( QCloseEvent *event )
         switch ( ret )
         {
         case QMessageBox::Save:
-            Save_All();
+            save_all();
             break;
         case QMessageBox::Discard:
             event->accept();
@@ -451,231 +475,206 @@ void MainWindow::closeEvent( QCloseEvent *event )
     }
 }
 
+bool MainWindow::eventFilter(QObject *object, QEvent *event)
+{
+    if ( object == this &&event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->key() == Qt::Key_Tab) {
+            // Special tab handling
+            string n = "    ";
+            Doc.insert_text( (char*)n.c_str() );
+            refresh_screen();
+            return true;
+        } else
+            return false;
+    }
+    return false;
+}
 
-void MainWindow::keyPressEvent( QKeyEvent *ev )                                                                 /*按键事件 */
+void MainWindow::enter_pressed()
+{
+    if(isSelectedblock)
+        block_delete();
+    int	i, j = 0;
+    int	col	= Doc.cursor.col;
+    Row	*hang	= Doc.cursor.row_ptr;
+    Doc.new_row( Doc.cursor.row_ptr );
+    Doc.cursor.row_ptr = Doc.cursor.row_ptr->next_row;
+    Doc.cursor.cur_height++;
+    for ( i = col; i < hang->cur_len; i++ )
+    {
+        Doc.cursor.row_ptr->row_text[j++]	= hang->row_text[i];
+        hang->row_text[i] = '\0';
+    }
+    hang->cur_len = col;
+    Doc.cursor.row_ptr->cur_len	= j;
+    Doc.cursor.col = 0;
+    Doc.cursor.row_cnt++;
+    Doc.isModified = true;
+}
+
+void MainWindow::delete_pressed()
+{
+    if(isSelectedblock)
+        block_delete();
+    else if ( Doc.cursor.col < Doc.cursor.row_ptr->cur_len )  //当指针不在行尾的时候(之前有字符可以删除)
+    {
+        // 判断中文字符
+        int mov = 1;
+        if ( Doc.cursor.row_ptr->row_text[Doc.cursor.col] < 0 )
+            mov = 3;
+
+        for ( int i = Doc.cursor.col; i <= Doc.cursor.row_ptr->cur_len - mov; i++ )
+        {
+            Doc.cursor.row_ptr->row_text[i]	= Doc.cursor.row_ptr->row_text[i + mov];
+            Doc.cursor.row_ptr->row_text[i + mov] = '\0';
+        }
+        Doc.cursor.row_ptr->cur_len	-= mov;
+        Doc.isModified = true;
+    }
+    else if ( Doc.cursor.col == Doc.cursor.row_ptr->cur_len && Doc.cursor.row_ptr->next_row )
+    {// 当在行尾，并且不是最后一行一行(最后一行行尾delete就不用操作了)
+        Row *temp = Doc.cursor.row_ptr->next_row;
+        if ( temp->next_row )
+        {
+            Doc.cursor.row_ptr->next_row = temp->next_row;
+        } else {
+            Doc.cursor.row_ptr->next_row = NULL;
+        }
+        // 需要把之后行的加到后面
+        int	i	= 0;
+        int	col	= Doc.cursor.col;
+        while ( i < temp->cur_len )
+        {
+            Doc.cursor.row_ptr->row_text[col++] = temp->row_text[i++];
+            Doc.cursor.row_ptr->cur_len++;
+        }
+        delete temp;
+        Doc.cursor.cur_height--;
+        Doc.isModified = true;
+    }
+
+}
+
+void MainWindow::backspace_pressed()
+{
+    if ( isSelectedblock )
+        block_delete();
+    else if ( Doc.cursor.col > 0 )  //当指针不在行首的时候(之前有字符可以删除)
+    {
+        //判断中文字符
+        int mov = 1;
+        if ( Doc.cursor.row_ptr->row_text[Doc.cursor.col - 1] < 0 )
+            mov = 3;
+        for ( int i = Doc.cursor.col - mov; i <= Doc.cursor.row_ptr->cur_len - mov; i++ )
+        {
+            Doc.cursor.row_ptr->row_text[i]	= Doc.cursor.row_ptr->row_text[i + mov];
+            Doc.cursor.row_ptr->row_text[i + mov] = '\0';
+        }
+        Doc.cursor.col -= mov;
+        Doc.cursor.row_ptr->cur_len	-= mov;
+        Doc.isModified = true;
+    }
+    else if ( Doc.cursor.col == 0 && Doc.cursor.row_ptr != Doc.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
+    {
+        Row *temp = Doc.cursor.row_ptr;
+        Doc.cursor.row_ptr = temp->prev_row;
+        if ( temp->next_row )
+        {
+            temp->next_row->prev_row = Doc.cursor.row_ptr;
+        }
+        Doc.cursor.row_ptr->next_row = temp->next_row;
+        Doc.cursor.col = Doc.cursor.row_ptr->cur_len;
+        // 需要把之后行的加到后面
+        int	i = 0;
+        int	col	= Doc.cursor.col;
+        while ( i < temp->cur_len )
+        {
+            Doc.cursor.row_ptr->row_text[col++] = temp->row_text[i++];
+            Doc.cursor.row_ptr->cur_len++;
+        }
+        Doc.cursor.row_cnt--;
+        Doc.cursor.cur_height--;
+        delete temp;
+        Doc.isModified = true;
+    }
+}
+
+void MainWindow::keyPressEvent( QKeyEvent *ev )
 {
     this->setFocus();
-    char	n1[10];
-    string	n;
+    string n;
     n = ev->key();
-    if ( ev->key() == Qt::Key_CapsLock )                                                                    /* 大小写切换 */
-    {
+    if ( ev->key() == Qt::Key_CapsLock ){
         if ( caps == true )
             caps = false;
         else
             caps = true;
-    } else if ( ev->key() == Qt::Key_Shift )
-        ;                                                                                               /* 单独按shift */
-    else if ( (ev->key() <= Qt::Key_Z && ev->key() >= Qt::Key_A) && ev->modifiers() == Qt::ShiftModifier )  /*按住shift的大小写切换 */
-    {
+    }
+    else if ( ev->key() == Qt::Key_Left ){
+        Doc.cursor_left();
+    }
+    else if ( ev->key() == Qt::Key_Up ){
+        Doc.cursor_up();
+    }
+    else if ( ev->key() == Qt::Key_Right ){
+        Doc.cursor_right();
+    }
+    else if ( ev->key() == Qt::Key_Down ){
+        Doc.cursor_down();
+    }
+    else if( ev->key() == Qt::Key_Home ){
+        Doc.cursor_home();
+    }
+    else if( ev->key() == Qt::Key_End ){
+        Doc.cursor_end();
+    }
+    else if( ev->key() == Qt::Key_Shift || ev->key() == Qt::Key_Control ||
+             ev->key() == Qt::Key_Alt || ev->key() == Qt::Key_Insert ){
+        ;
+    }
+    else if ( (ev->key() <= Qt::Key_Z && ev->key() >= Qt::Key_A) && ev->modifiers() == Qt::ShiftModifier ){
+        if(isSelectedblock)
+            block_delete();
         if ( caps == true )
         {
             transform( n.begin(), n.end(), n.begin(), ::tolower );
-            strcpy( n1, n.c_str() );
-            sentence.edit( n1 );
+            Doc.insert_text( (char*)n.c_str() );
         } else {
             transform( n.begin(), n.end(), n.begin(), ::toupper );
-            strcpy( n1, n.c_str() );
-            sentence.edit( n1 );
+            Doc.insert_text( (char*)n.c_str() );
         }
-    } else if ( ev->modifiers() == Qt::ShiftModifier && ev->key() == Qt::CTRL )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->key() == Qt::SHIFT && ev->modifiers() == Qt::ControlModifier )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->modifiers() == Qt::ShiftModifier && ev->key() == Qt::ALT )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->key() == Qt::SHIFT && ev->modifiers() == Qt::AltModifier )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->modifiers() == Qt::ControlModifier )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->key() == Qt::CTRL )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->key() == Qt::ALT )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( ev->modifiers() == Qt::AltModifier )
-    {
-/*        qDebug()<<"Discard"; */
-    } else if ( n == "\u0004" ) /* 输入为回车 */
-    {
+    }
+    else if ( ev->key() == Qt::Key_Enter || ev->key() == Qt::Key_Return ){
+        enter_pressed();
+    }
+    else if ( ev->key() == Qt::Key_Backspace ) {
+        backspace_pressed();
+    }
+    else if ( ev->key() == Qt::Key_Delete ) {
+        delete_pressed();
+    }
+    else { // 英文输入
         if(isSelectedblock)
-            Block_Delete();
-        int	i, j = 0;
-        int	col	= sentence.cursor.col;
-        Row	*hang	= sentence.cursor.hang;
-        sentence.add_row( sentence.cursor.hang );
-        sentence.cursor.hang = sentence.cursor.hang->Next_Row;
-        sentence.cursor.cur_height++;
-        for ( i = col; i < hang->cur_len; i++ )
-        {
-            sentence.cursor.hang->row_text[j++]	= hang->row_text[i];
-            hang->row_text[i]			= '\0';
-        }
-        hang->cur_len			= col;
-        sentence.cursor.hang->cur_len	= j;
-        sentence.cursor.col		= 0;
-        sentence.cursor.row++;
-        sentence.isModified = true;
-    } else if ( n == "\u0001" ) /* 输入为TAB */
-    {
-        /* DEBUG 无法检测到TAB */
-        if(isSelectedblock)
-            Block_Delete();
-        qDebug() << "TABBBBBBBBBBBBBBBB";
-        n = "    ";
-        strcpy( n1, n.c_str() );
-        sentence.edit( n1 );
-        /* sentence.add_row(sentence.cur_row); */
-    } else if ( n == "\u0003" )                     /* 输入为backspace */
-    {
-        if ( isSelectedblock )
-        {
-            Block_Delete();
-        } else if ( sentence.cursor.col > 0 )   /* 当指针不在行首的时候(之前有字符可以删除) */
-        {
-            /* 判断中文字符 */
-            int mov = 1;
-            if ( sentence.cursor.hang->row_text[sentence.cursor.col - 1] < 0 )
-                mov = 3;
-            for ( int i = sentence.cursor.col - mov; i <= sentence.cursor.hang->cur_len - mov; i++ )
-            {
-                sentence.cursor.hang->row_text[i]	= sentence.cursor.hang->row_text[i + mov];
-                sentence.cursor.hang->row_text[i + mov] = '\0';
-            }
-            sentence.cursor.col		-= mov;
-            sentence.cursor.hang->cur_len	-= mov;
-            sentence.isModified		= true;
-        } else if ( sentence.cursor.col == 0 && sentence.cursor.hang != sentence.first_row ) /* 当在行首，并且不是第一行(第一行行首删除就不用操作了) */
-        {
-            Row *temp = sentence.cursor.hang;
-            sentence.cursor.hang = temp->Prev_Row;
-            if ( temp->Next_Row )
-            {
-                temp->Next_Row->Prev_Row = sentence.cursor.hang;
-            }
-            sentence.cursor.hang->Next_Row	= temp->Next_Row;
-            sentence.cursor.col		= sentence.cursor.hang->cur_len;
-            /* 需要把之后行的加到后面 */
-            int	i	= 0;
-            int	col	= sentence.cursor.col;
-            while ( i < temp->cur_len )
-            {
-                sentence.cursor.hang->row_text[col++] = temp->row_text[i++];
-                sentence.cursor.hang->cur_len++;
-            }
-            sentence.cursor.row--;
-            sentence.cursor.cur_height--;
-            delete temp;
-            sentence.isModified = true;
-        }
-    } else if ( n == "\u0007" )                                             /* 输入为delete */
-    {
-        if(isSelectedblock)
-            Block_Delete();
-        else if ( sentence.cursor.col < sentence.cursor.hang->cur_len )      /* 当指针不在行尾的时候(之前有字符可以删除) */
-        {
-            /* 判断中文字符 */
-            int mov = 1;
-            if ( sentence.cursor.hang->row_text[sentence.cursor.col] < 0 )
-                mov = 3;
-
-            for ( int i = sentence.cursor.col; i <= sentence.cursor.hang->cur_len - mov; i++ )
-            {
-                sentence.cursor.hang->row_text[i]	= sentence.cursor.hang->row_text[i + mov];
-                sentence.cursor.hang->row_text[i + mov] = '\0';
-            }
-            sentence.cursor.hang->cur_len	-= mov;
-            sentence.isModified		= true;
-        } else if ( sentence.cursor.col == sentence.cursor.hang->cur_len &&
-                sentence.cursor.hang->Next_Row ) /* 当在行尾，并且不是最后一行一行(最后一行行尾删除就不用操作了) */
-        {
-            Row *temp = sentence.cursor.hang->Next_Row;
-            if ( temp->Next_Row )
-            {
-                sentence.cursor.hang->Next_Row = temp->Next_Row;
-            } else {
-                sentence.cursor.hang->Next_Row = NULL;
-            }
-            /* 需要把之后行的加到后面 */
-            int	i	= 0;
-            int	col	= sentence.cursor.col;
-            while ( i < temp->cur_len )
-            {
-                sentence.cursor.hang->row_text[col++] = temp->row_text[i++];
-                sentence.cursor.hang->cur_len++;
-            }
-            delete temp;
-            sentence.cursor.cur_height--;
-            sentence.isModified = true;
-        }
-    } else if ( n == "\u0012" )     /* 左 */
-    {
-        if(isSelectedblock)
-            Block_Delete();
-        sentence.cursor_left();
-    } else if ( n == "\u0013" )     /*上 */
-    {
-        if(isSelectedblock)
-            Block_Delete();
-        sentence.cursor_up();
-    } else if ( n == "\u0014" )     /* 右 */
-    {
-        if(isSelectedblock)
-            Block_Delete();
-        sentence.cursor_right();
-    } else if ( n == "\u0015" )     /*下 */
-    {
-        if(isSelectedblock)
-            Block_Delete();
-        sentence.cursor_down();
-    } else{ /* 英文输入 */
-        if(isSelectedblock)
-            Block_Delete();
+            block_delete();
         if ( caps == false )
             transform( n.begin(), n.end(), n.begin(), ::tolower );
-        strcpy( n1, n.c_str() );
-        sentence.edit( n1 );
-        /*
-         * qDebug() << n1 << endl;
-         * MODIFIED
-         * sentence.cursor.col += strlen(n1);
-         */
+        Doc.insert_text((char*)n.c_str());
     }
 
-    refresh();
-}
+    refresh_screen();
 
+}
 
 void MainWindow::inputMethodEvent( QInputMethodEvent *a )
 {
-    refresh();
     qDebug() << "当前输入为" << a->commitString().toUtf8().data();
-    qDebug() << sentence.cursor.chi_cnt;
-    qDebug() << sentence.cursor.col;
-    sentence.edit( a->commitString().toUtf8().data() );
-    Row *temp = sentence.first_row;
-    qsentence = "";
-    while ( temp )
-    {
-        qsentence.append( temp->row_text );
-        qsentence.append( '\n' ); /* MODIFIED */
-        temp = temp->Next_Row;
-    }
-    ui->label->setText( qsentence );
-    ui->label->adjustSize();
-    ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11, 26 * sentence.cursor.row,
-                  30, 30 );
-    ui->scrollAreaWidgetContents_2->setMinimumSize( ui->label->width(), ui->label->height() );
+    qDebug() << Doc.cursor.chi_cnt;
+    qDebug() << Doc.cursor.col;
+    Doc.insert_text( a->commitString().toUtf8().data() );
     this->setFocus();
-    refresh();
+    refresh_screen();
 }
-
 
 void MainWindow::mouseMoveEvent( QMouseEvent *event )
 {
@@ -686,21 +685,20 @@ void MainWindow::mouseMoveEvent( QMouseEvent *event )
             start_x = event->pos().x();
             start_y = event->pos().y();
             pos_to_coordinate( start_x, start_y, false );
-            start_col	= sentence.cursor.col + 1;
-            start_row	= sentence.cursor.row;
+            start_col	= Doc.cursor.col + 1;
+            start_row	= Doc.cursor.row_cnt;
         }
         end_x	= event->pos().x();
         end_y	= event->pos().y();
 
         pos_to_coordinate( end_x, end_y, false );
-        end_col = sentence.cursor.col + 1;
-        end_row = sentence.cursor.row;
+        end_col = Doc.cursor.col + 1;
+        end_row = Doc.cursor.row_cnt;
 
         add_blockshadow();
-        refresh();
+        refresh_screen();
     }
 }
-
 
 void MainWindow::mouseReleaseEvent( QMouseEvent *event )
 {
@@ -712,10 +710,9 @@ void MainWindow::mouseReleaseEvent( QMouseEvent *event )
 
         start_x		= -1;
         start_y		= -1;
-        refresh();
+        refresh_screen();
     }
 }
-
 
 void MainWindow::mousePressEvent( QMouseEvent *event )
 {
@@ -740,71 +737,69 @@ void MainWindow::mousePressEvent( QMouseEvent *event )
     this->setFocus();
 }
 
-
 void MainWindow::pos_to_coordinate( int x, int y, bool flag )
 {
     int	toolbar_height	= ui->mainToolBar->height() + ui->menuBar->height();
     int	hbar_height	= ui->scrollArea->horizontalScrollBar()->value();
     int	vbar_height	= ui->scrollArea->verticalScrollBar()->value();
-    for ( int j = 0; j < sentence.cursor.cur_height; j++ )
+    for ( int j = 0; j < Doc.cursor.cur_height; j++ )
     {
         if ( y + vbar_height > 26 * j + toolbar_height && y + vbar_height < 26 * (j + 1) + toolbar_height )
         {
-            if ( sentence.cursor.row < j )
-                for ( int temp = sentence.cursor.row; temp < j; temp++ )
-                    sentence.cursor.hang = sentence.cursor.hang->Next_Row;
-            else if ( sentence.cursor.row >= j )
-                for ( int temp = 0; temp < sentence.cursor.row - j; temp++ )
-                    sentence.cursor.hang = sentence.cursor.hang->Prev_Row;
-            sentence.cursor.row = j;
+            if ( Doc.cursor.row_cnt < j )
+                for ( int temp = Doc.cursor.row_cnt; temp < j; temp++ )
+                    Doc.cursor.row_ptr = Doc.cursor.row_ptr->next_row;
+            else if ( Doc.cursor.row_cnt >= j )
+                for ( int temp = 0; temp < Doc.cursor.row_cnt - j; temp++ )
+                    Doc.cursor.row_ptr = Doc.cursor.row_ptr->prev_row;
+            Doc.cursor.row_cnt = j;
 
-            for ( int i = 1; i <= sentence.cursor.hang->cur_len; i++ )
+            for ( int i = 1; i <= Doc.cursor.row_ptr->cur_len; i++ )
             {
                 if ( x + hbar_height > (12 * i - 11) && x + hbar_height <= (12 * (i + 1) - 11) )
                 {
-                    sentence.cursor.col = i - 1;
+                    Doc.cursor.col = i - 1;
                     if ( flag )
-                        ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11,
-                                      26 * sentence.cursor.row, 30, 30 );
+                        ui->label_2->setGeometry( 12 * (Doc.cursor.col - Doc.cursor.chi_cnt * 1.08) - 11,
+                                      26 * Doc.cursor.row_cnt, 30, 30 );
                     break;
-                } else if ( x + hbar_height >= 12 * (sentence.cursor.hang->cur_len + 1) - 11 )
+                } else if ( x + hbar_height >= 12 * (Doc.cursor.row_ptr->cur_len + 1) - 11 )
                 {
-                    sentence.cursor.col = sentence.cursor.hang->cur_len;
+                    Doc.cursor.col = Doc.cursor.row_ptr->cur_len;
                     if ( flag )
-                        ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11,
-                                      26 * sentence.cursor.row, 30, 30 );
+                        ui->label_2->setGeometry( 12 * (Doc.cursor.col - Doc.cursor.chi_cnt * 1.08) - 11,
+                                      26 * Doc.cursor.row_cnt, 30, 30 );
                     break;
                 }
             }
             break;
         }
     }
-    if ( y + vbar_height >= 26 * sentence.cursor.cur_height + toolbar_height )
+    if ( y + vbar_height >= 26 * Doc.cursor.cur_height + toolbar_height )
     {
-        while ( sentence.cursor.hang->Next_Row )
-            sentence.cursor.hang = sentence.cursor.hang->Next_Row;
-        sentence.cursor.row = sentence.cursor.cur_height;
-        for ( int i = 1; i <= sentence.cursor.hang->cur_len; i++ )
+        while ( Doc.cursor.row_ptr->next_row )
+            Doc.cursor.row_ptr = Doc.cursor.row_ptr->next_row;
+        Doc.cursor.row_cnt = Doc.cursor.cur_height;
+        for ( int i = 1; i <= Doc.cursor.row_ptr->cur_len; i++ )
         {
             if ( x + hbar_height > (12 * i - 11) && x + hbar_height <= (12 * (i + 1) - 11) )
             {
-                sentence.cursor.col = i - 1;
+                Doc.cursor.col = i - 1;
                 if ( flag )
-                    ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11,
-                                  26 * sentence.cursor.row, 30, 30 );
+                    ui->label_2->setGeometry( 12 * (Doc.cursor.col - Doc.cursor.chi_cnt * 1.08) - 11,
+                                  26 * Doc.cursor.row_cnt, 30, 30 );
                 break;
-            } else if ( x + hbar_height >= 12 * (sentence.cursor.hang->cur_len + 1) - 11 )
+            } else if ( x + hbar_height >= 12 * (Doc.cursor.row_ptr->cur_len + 1) - 11 )
             {
-                sentence.cursor.col = sentence.cursor.hang->cur_len;
+                Doc.cursor.col = Doc.cursor.row_ptr->cur_len;
                 if ( flag )
-                    ui->label_2->setGeometry( 12 * (sentence.cursor.col - sentence.cursor.chi_cnt * 1.08) - 11,
-                                  26 * sentence.cursor.row, 30, 30 );
+                    ui->label_2->setGeometry( 12 * (Doc.cursor.col - Doc.cursor.chi_cnt * 1.08) - 11,
+                                  26 * Doc.cursor.row_cnt, 30, 30 );
                 break;
             }
         }
     }
 }
-
 
 MainWindow::~MainWindow()
 {

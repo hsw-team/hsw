@@ -1,74 +1,78 @@
 #include "document.h"
 #include "mainwindow.h"
+
+/********* Row *********/
 Row::Row()
 {
-    qDebug() << " Row 构造函数\n";
-    this->row_text = (char*)calloc(1, sizeof(char) * 100);
-    this->Next_Row = NULL;
-    this->Prev_Row = NULL;
+    qDebug() << " Row 构造函数";
     this->cur_len = 0;
     this->max_len = 100;
-
+    this->next_row = NULL;
+    this->prev_row = NULL;
+    this->row_text = (char*)calloc(1, sizeof(char) * 100);
 }
-void Row::add_block()
+
+void Row::expand_block()
 {
-    qDebug() << "调用 add_block()\n";
-
+    qDebug() << "调用 expand_block()";
     this->row_text = (char*)realloc(row_text, this->max_len + 100 * sizeof(char));
-
     this->max_len += 100;
 }
 
-//=========================================================================================
 
+/******* Document *******/
 Document::Document()
 {
-    qDebug() << " Document 构造函数\n";
+    qDebug() << " Document 构造函数";
     //创建第一行
     this->first_row = new Row;
-    this->cursor.hang = this->first_row;
-    this->first_row->Prev_Row = NULL;
+    this->cursor.row_ptr = this->first_row;
+    this->first_row->prev_row = NULL;
     //光标初始化
-    cursor.hang = first_row;
+    cursor.row_ptr = first_row;
     cursor.col = 0;
-    cursor.row = 0;
+    cursor.row_cnt = 0;
     cursor.chi_cnt = 0;
-    //文档逻辑
+    //文档逻辑判断初始化
     isModified = false;
     file_name = "";
 }
-void Document::edit(const char *s)
-{
-    this->isModified = true;
-    qDebug() << "***DOCUMNET*** 调用 edit()\n";
-    int s_len = strlen(s);
-    while (s_len >= (this->cursor.hang->max_len - this->cursor.hang->cur_len)) {
-        this->cursor.hang->add_block();
-        qDebug() << "edit循环";
-    }
-    this->cursor.hang->cur_len += s_len;
 
-    for(int i = cursor.hang->cur_len - 1; i >= cursor.col; i--)
+void Document::insert_text(const char *s)
+{
+    qDebug() << "***DOCUMNET*** 调用 insert_text()";
+    this->isModified = true;
+    int s_len = strlen(s);
+    //检查是否需要分配空间
+    while (s_len >= (this->cursor.row_ptr->max_len - this->cursor.row_ptr->cur_len))
     {
-        if(cursor.hang->cur_len + s_len > cursor.hang->max_len)
-           cursor.hang->add_block();
-        cursor.hang->row_text[i + s_len] = cursor.hang->row_text[i];
+        qDebug() << "insert_text()循环";
+        this->cursor.row_ptr->expand_block();
     }
-    for(int j = 0; j < s_len; j++){
-        cursor.hang->row_text[j + cursor.col] = s[j];
+    this->cursor.row_ptr->cur_len += s_len;
+    //将当前行光标后字符后挪 s_len 长度
+    for(int i = cursor.row_ptr->cur_len - 1; i >= cursor.col; i--)
+    {
+        if(cursor.row_ptr->cur_len + s_len > cursor.row_ptr->max_len)
+           cursor.row_ptr->expand_block();
+        cursor.row_ptr->row_text[i + s_len] = cursor.row_ptr->row_text[i];
     }
+    //填入当前输入字符串
+    for(int j = 0; j < s_len; j++)
+        cursor.row_ptr->row_text[j + cursor.col] = s[j];
+    //光标移动
     this->cursor.col += s_len;
 }
 
-void Document::add_row(Row *ptr)
+void Document::new_row(Row *ptr)
 {
     this->isModified = true;
     Row *tmp = new Row;
-    tmp->Prev_Row = ptr;
-    tmp->Next_Row = ptr->Next_Row;
-    if(ptr->Next_Row)
-        ptr->Next_Row->Prev_Row = tmp;
-    ptr->Next_Row = tmp;
+    tmp->prev_row = ptr;
+    tmp->next_row = ptr->next_row;
+    if(ptr->next_row)
+        ptr->next_row->prev_row = tmp;
+    ptr->next_row = tmp;
     ptr = tmp;
 }
 
@@ -76,10 +80,10 @@ void Document::delete_row(Row *ptr)
 {
     this->isModified = true;
     Row *tmp = new Row;
-    tmp = ptr->Prev_Row;
-    tmp->Next_Row = ptr->Next_Row;
-    if(ptr->Next_Row)
-        ptr->Next_Row->Prev_Row = tmp;
+    tmp = ptr->prev_row;
+    tmp->next_row = ptr->next_row;
+    if(ptr->next_row)
+        ptr->next_row->prev_row = tmp;
     delete ptr;
 }
 
@@ -90,16 +94,17 @@ void Document::read_file(char *s)
     QFile inputFile(s);
     QString line_text;
     string str;
-    if(inputFile.open(QIODevice::ReadOnly)){
+    if(inputFile.open(QIODevice::ReadOnly))
+    {
         QTextStream in(&inputFile);
         in.setCodec(QTextCodec::codecForName("gbk"));
-        while(in.readLineInto(&line_text)){
-            qDebug()<<line_text;
+        //按行读入文档
+        while(in.readLineInto(&line_text))
+        {
             str = line_text.toStdString();
-            this->edit((char*)str.c_str());
-            this->add_row(this->cursor.hang);
+            this->insert_text((char*)str.c_str());
+            this->new_row(this->cursor.row_ptr);
             this->cursor.cur_height++;
-            qDebug() << "height row"<<this->cursor.cur_height << this->cursor.row;
             this->cursor_down();
         }
         inputFile.close();
@@ -113,44 +118,38 @@ bool Document::save_file(char *s)
     QFile outputFile(s);
     QString line_text;
     Row *temp = this->first_row;
-    if(outputFile.open(QIODevice::WriteOnly | QIODevice::ReadWrite | QIODevice::Text))
-    {
+    if(outputFile.open(QIODevice::WriteOnly | QIODevice::ReadWrite | QIODevice::Text)){
         QTextStream out(&outputFile);
         out.setCodec(QTextCodec::codecForName("gbk"));
-        while(temp)
-        {
+        while(temp){
+            //按行保存到文件
             line_text = temp->row_text;
             line_text.toStdString();
             out << line_text;
             out << '\n';
-            temp = temp->Next_Row;
+            temp = temp->next_row;
         }
         outputFile.close();
         this->isModified = false;
         return true;
     }
     else
-    {
         return false;
-    }
 }
-
-//===========================================================================================
-
 
 void Document::cursor_left()
 {
     qDebug() << "@Cursor Left";
     if(cursor.col == 0){
-        if(cursor.hang->Prev_Row){
-            cursor.hang = cursor.hang->Prev_Row;
-            cursor.col = cursor.hang->cur_len;
-            cursor.row--;
+        if(cursor.row_ptr->prev_row) {
+            cursor.row_ptr = cursor.row_ptr->prev_row;
+            cursor.col = cursor.row_ptr->cur_len;
+            cursor.row_cnt--;
         }
     }
     else{
-        //判断中文字符(中文的ASCII小于0)
-        if(cursor.hang->row_text[cursor.col - 1] > 0)
+        //判断中文字符(中文小于0)
+        if(cursor.row_ptr->row_text[cursor.col - 1] > 0)
             cursor.col--;
         else{
             cursor.col -= 3;
@@ -160,100 +159,96 @@ void Document::cursor_left()
 void Document::cursor_right()
 {
     qDebug() << "@Cursor Right";
-    if(cursor.col >= cursor.hang->cur_len){
-        if(cursor.hang->Next_Row){
-            cursor.hang = cursor.hang->Next_Row;
+    if(cursor.col >= cursor.row_ptr->cur_len){
+        if(cursor.row_ptr->next_row){
+            cursor.row_ptr = cursor.row_ptr->next_row;
             cursor.col = 0;
-            cursor.row++;
+            cursor.row_cnt++;
         }
         else
-        {
-            cursor.col = cursor.hang->cur_len;
-        }
+            cursor.col = cursor.row_ptr->cur_len;
     }
     else{
-        //判断中文字符(中文的ASCII小于0)
-        if(cursor.hang->row_text[cursor.col] > 0)
+        //判断中文字符(中文小于0)
+        if(cursor.row_ptr->row_text[cursor.col] > 0)
             cursor.col++;
-        else{
+        else {
             cursor.col += 3;
         }
     }
 }
-void Document::cursor_up()//MODIFIED
+
+void Document::cursor_up()
 {
     qDebug() << "@Cursor up";
     int n = cursor.col;
-    if(cursor.hang->Prev_Row){
-        cursor.hang = cursor.hang->Prev_Row;
-        if(cursor.col > cursor.hang->cur_len){
-            cursor.col = cursor.hang->cur_len;
+    if(cursor.row_ptr->prev_row){
+        cursor.row_ptr = cursor.row_ptr->prev_row;
+        if(cursor.col > cursor.row_ptr->cur_len){
+            cursor.col = cursor.row_ptr->cur_len;
         }
-        else
-        {
+        else{
             cursor.col = 0;
             for(int i = 0; i < (n - 2 * cursor.chi_cnt); i++)
                 cursor_right();
         }
-        //MODIFIED
-
-        cursor.row--;
+        cursor.row_cnt--;
     }
 }
-void Document::cursor_down()//MODIFIED
+
+void Document::cursor_down()
 {
     qDebug() << "@Cursor down";
-    int n = cursor.col;
-    if(cursor.hang->Next_Row){
-        cursor.hang = cursor.hang->Next_Row;
-        if(cursor.col > cursor.hang->cur_len){
-            cursor.col = cursor.hang->cur_len;
+    int mov = cursor.col;
+    if(cursor.row_ptr->next_row){
+        cursor.row_ptr = cursor.row_ptr->next_row;
+        if(cursor.col > cursor.row_ptr->cur_len){
+            cursor.col = cursor.row_ptr->cur_len;
         }
-        else
-        {
+        else{
             cursor.col = 0;
-            for(int i = 0; i < (n - 2 * cursor.chi_cnt); i++)
+            for(int i = 0; i < (mov - 2 * cursor.chi_cnt); i++)
                 cursor_right();
         }
-        //MODIFIED
-
-        cursor.row++;
+        cursor.row_cnt++;
     }
 }
+
 void Document::cursor_home()
 {
     qDebug() << "@Cursor home";
-    cursor.hang = first_row;
+    cursor.row_ptr = first_row;
     cursor.col = 0;
+    cursor.row_cnt = 0;
 }
+
 void Document::cursor_end()
 {
     qDebug() << "@Cursor end";
-    while(cursor.hang->Next_Row){
-        cursor.hang = cursor.hang->Next_Row;
+    while(cursor.row_ptr->next_row){
+        cursor.row_ptr = cursor.row_ptr->next_row;
+        cursor.row_cnt++;
     }
-    cursor.col = cursor.hang->cur_len;
+    cursor.col = cursor.row_ptr->cur_len;
 }
 
-void Document::clear_all()//MODIFIED
+void Document::clear_all()
 {
     isModified = false;
+    //删除每一行
     Row *tmp = this->first_row, *tmp_next;
-    while(tmp)
-    {
-        tmp_next = tmp->Next_Row;
+    while(tmp){
+        tmp_next = tmp->next_row;
         delete tmp;
         tmp = tmp_next;
     }
-
-    //创建第一行
+    //重建第一行
     this->first_row = new Row;
-    this->cursor.hang = this->first_row;
-    this->first_row->Prev_Row = NULL;
+    this->cursor.row_ptr = this->first_row;
     //光标初始化
-    cursor.hang = first_row;
+    cursor.row_ptr = first_row;
     cursor.col = 0;
-    cursor.row = 0;
+    cursor.row_cnt = 0;
     cursor.chi_cnt = 0;
     //文档逻辑
     isModified = false;

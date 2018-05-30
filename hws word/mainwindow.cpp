@@ -126,10 +126,7 @@ int MainWindow::chinese_judge(int &col)
         if ( Doc.cursor.row_ptr->row_text[i] < 0 )
             chi_cnt++;
     int n = chi_cnt % 3;
-    while( n && Doc.cursor.col){
-        n--;
-        col--;
-    }
+    for(;n && col; n--, col--);
     return chi_cnt/3;
 }
 

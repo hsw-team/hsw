@@ -31,9 +31,15 @@ Document::Document()
     //光标初始化
     cursor.hang = first_row;
     cursor.col = 0;
+    cursor.row = 0;
+    cursor.chi_cnt = 0;
+    //文档逻辑
+    isModified = false;
+    file_name = "";
 }
-void Document::edit(char *s)
+void Document::edit(const char *s)
 {
+    this->isModified = true;
     qDebug() << "***DOCUMNET*** 调用 edit()\n";
     int s_len = strlen(s);
     while (s_len >= (this->cursor.hang->max_len - this->cursor.hang->cur_len)) {
@@ -44,9 +50,10 @@ void Document::edit(char *s)
 
     for(int i = cursor.hang->cur_len - 1; i >= cursor.col; i--)
     {
+        if(cursor.hang->cur_len + s_len > cursor.hang->max_len)
+           cursor.hang->add_block();
         cursor.hang->row_text[i + s_len] = cursor.hang->row_text[i];
     }
-
     for(int j = 0; j < s_len; j++){
         cursor.hang->row_text[j + cursor.col] = s[j];
     }
@@ -55,6 +62,7 @@ void Document::edit(char *s)
 
 void Document::add_row(Row *ptr)
 {
+    this->isModified = true;
     Row *tmp = new Row;
     tmp->Prev_Row = ptr;
     tmp->Next_Row = ptr->Next_Row;
@@ -63,15 +71,16 @@ void Document::add_row(Row *ptr)
     ptr->Next_Row = tmp;
     ptr = tmp;
 }
-void Document::show_doc()
+
+void Document::delete_row(Row *ptr)
 {
-    qDebug() << "调用 show_doc()\n";
-    Row *ptr = this->first_row;
-    while (ptr) {
-        qDebug() << "show_doc 循环\n";
-        qDebug() << ptr->row_text << endl;
-        ptr = ptr->Next_Row;
-    }
+    this->isModified = true;
+    Row *tmp = new Row;
+    tmp = ptr->Prev_Row;
+    tmp->Next_Row = ptr->Next_Row;
+    if(ptr->Next_Row)
+        ptr->Next_Row->Prev_Row = tmp;
+    delete ptr;
 }
 
 //读取文件到document对象，文件路径为char *s;
@@ -89,9 +98,13 @@ void Document::read_file(char *s)
             str = line_text.toStdString();
             this->edit((char*)str.c_str());
             this->add_row(this->cursor.hang);
+            this->cursor.cur_height++;
+            qDebug() << "height row"<<this->cursor.cur_height << this->cursor.row;
+            this->cursor_down();
         }
         inputFile.close();
     }
+    this->isModified = false;
 }
 
 bool Document::save_file(char *s)
@@ -103,7 +116,7 @@ bool Document::save_file(char *s)
     if(outputFile.open(QIODevice::WriteOnly | QIODevice::ReadWrite | QIODevice::Text))
     {
         QTextStream out(&outputFile);
-        out.setCodec(QTextCodec::codecForName("gbk"));//DEBUG！！！！！！！！！！！！！！！！！！！！！！！！！
+        out.setCodec(QTextCodec::codecForName("gbk"));
         while(temp)
         {
             line_text = temp->row_text;
@@ -113,6 +126,7 @@ bool Document::save_file(char *s)
             temp = temp->Next_Row;
         }
         outputFile.close();
+        this->isModified = false;
         return true;
     }
     else
@@ -135,46 +149,74 @@ void Document::cursor_left()
         }
     }
     else{
-        //TODO:
-        //判断中文字符
-        cursor.col--;
+        //判断中文字符(中文的ASCII小于0)
+        if(cursor.hang->row_text[cursor.col - 1] > 0)
+            cursor.col--;
+        else{
+            cursor.col -= 3;
+        }
     }
 }
 void Document::cursor_right()
 {
     qDebug() << "@Cursor Right";
-    if(cursor.col == cursor.hang->cur_len){//在本行行尾
-        if(cursor.hang->Next_Row){//如果有下一行，变到下一行开头。没有下一行那就不变
+    if(cursor.col >= cursor.hang->cur_len){
+        if(cursor.hang->Next_Row){
             cursor.hang = cursor.hang->Next_Row;
             cursor.col = 0;
             cursor.row++;
         }
+        else
+        {
+            cursor.col = cursor.hang->cur_len;
+        }
     }
     else{
-        //TODO：
-        //判断中文字符
-        cursor.col++;
+        //判断中文字符(中文的ASCII小于0)
+        if(cursor.hang->row_text[cursor.col] > 0)
+            cursor.col++;
+        else{
+            cursor.col += 3;
+        }
     }
 }
-void Document::cursor_up()
+void Document::cursor_up()//MODIFIED
 {
     qDebug() << "@Cursor up";
+    int n = cursor.col;
     if(cursor.hang->Prev_Row){
         cursor.hang = cursor.hang->Prev_Row;
         if(cursor.col > cursor.hang->cur_len){
             cursor.col = cursor.hang->cur_len;
         }
+        else
+        {
+            cursor.col = 0;
+            for(int i = 0; i < (n - 2 * cursor.chi_cnt); i++)
+                cursor_right();
+        }
+        //MODIFIED
+
         cursor.row--;
     }
 }
-void Document::cursor_down()
+void Document::cursor_down()//MODIFIED
 {
     qDebug() << "@Cursor down";
+    int n = cursor.col;
     if(cursor.hang->Next_Row){
         cursor.hang = cursor.hang->Next_Row;
         if(cursor.col > cursor.hang->cur_len){
             cursor.col = cursor.hang->cur_len;
         }
+        else
+        {
+            cursor.col = 0;
+            for(int i = 0; i < (n - 2 * cursor.chi_cnt); i++)
+                cursor_right();
+        }
+        //MODIFIED
+
         cursor.row++;
     }
 }
@@ -193,4 +235,28 @@ void Document::cursor_end()
     cursor.col = cursor.hang->cur_len;
 }
 
+void Document::clear_all()//MODIFIED
+{
+    isModified = false;
+    Row *tmp = this->first_row, *tmp_next;
+    while(tmp)
+    {
+        tmp_next = tmp->Next_Row;
+        delete tmp;
+        tmp = tmp_next;
+    }
 
+    //创建第一行
+    this->first_row = new Row;
+    this->cursor.hang = this->first_row;
+    this->first_row->Prev_Row = NULL;
+    //光标初始化
+    cursor.hang = first_row;
+    cursor.col = 0;
+    cursor.row = 0;
+    cursor.chi_cnt = 0;
+    //文档逻辑
+    isModified = false;
+    file_name = "";
+
+}

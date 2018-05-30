@@ -26,14 +26,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    document.cpp
+    document.cpp \
+    finddialog.cpp \
+    blockshadow.cpp \
+    replacedialog.cpp
 
 HEADERS += \
         mainwindow.h \
-    document.h
+    document.h \
+    finddialog.h \
+    replacedialog.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    finddialog.ui \
+    replacedialog.ui
 
 RESOURCES += \
     icons.qrc

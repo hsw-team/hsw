@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>831</width>
-    <height>664</height>
+    <width>808</width>
+    <height>658</height>
    </rect>
   </property>
   <property name="cursor">
@@ -70,8 +70,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>815</width>
-         <height>566</height>
+         <width>792</width>
+         <height>560</height>
         </rect>
        </property>
        <property name="minimumSize">
@@ -112,9 +112,7 @@
          </rect>
         </property>
         <property name="styleSheet">
-         <string notr="true">border-image: url(:/my_images/icons/I.png);
-background: transparent;
-</string>
+         <string notr="true">border-image: url(:/my_images/icons/I.png);background: transparent;</string>
         </property>
         <property name="text">
          <string/>
@@ -130,7 +128,7 @@ background: transparent;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>831</width>
+     <width>808</width>
      <height>21</height>
     </rect>
    </property>
@@ -157,6 +155,7 @@ background: transparent;
     <addaction name="actionRedo_Y"/>
     <addaction name="separator"/>
     <addaction name="actionFind_F"/>
+    <addaction name="actionreplace_R"/>
     <addaction name="actionSelect_All_A"/>
    </widget>
    <widget class="QMenu" name="menuHelp_H">
@@ -312,10 +311,6 @@ background: transparent;
    </property>
   </action>
   <action name="actionFind_F">
-   <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/my_images/icons/find.png</normaloff>:/my_images/icons/find.png</iconset>
-   </property>
    <property name="text">
     <string>Find(&amp;F)</string>
    </property>
@@ -347,6 +342,14 @@ background: transparent;
   <action name="actionMiniword">
    <property name="text">
     <string>Miniword</string>
+   </property>
+  </action>
+  <action name="actionreplace_R">
+   <property name="text">
+    <string>replace(&amp;R)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
    </property>
   </action>
  </widget>

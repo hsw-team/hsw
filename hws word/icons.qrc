@@ -25,6 +25,6 @@
         <file>icons/cursor.png</file>
         <file>icons/I.png</file>
         <file>icons/logo.ico</file>
-        <file>icons/find.png</file>
+        <file>icons/blockshadow.png</file>
     </qresource>
 </RCC>

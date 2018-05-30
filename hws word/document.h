@@ -21,18 +21,15 @@
 //==================行===================
 class Row {
 public:
-    int max_len;
-    int cur_len;
-
     char *row_text;
-
     Row *Next_Row;
     Row *Prev_Row;
 
+    int max_len;
+    int cur_len;
+
     Row();
     void add_block();
-    //void append(char s);
-    //void edit(char *s);
 };
 
 //=================文档光标================
@@ -42,26 +39,33 @@ public:
     int row = 0;
     int col = 0;
     int cur_height=0;
+
+    int chi_cnt;
 };
 //=================整个文档================
 class Document {
 public:
+    bool isModified;
     Row *first_row;
     Row *cur_row;
     Cursor cursor;
+    QString file_name;//MODIFIED
 
     Document();
-    void edit(char *s);
+    void edit(const char *s);
     void add_row(Row *r);
+    void delete_row(Row *ptr);
     void read_file(char *file);
     bool save_file(char *file);
-    void show_doc();
+
     void cursor_left();
     void cursor_right();
     void cursor_up();
     void cursor_down();
     void cursor_home();
     void cursor_end();
+
+    void clear_all();//MODIFIED
 
 };
 #endif // DOCUMENT_H

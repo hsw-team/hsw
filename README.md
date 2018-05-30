@@ -2,24 +2,13 @@
 
 it is a final project for our data structure class.
 
-**Apr. 20th 2018**
+**Updated on May 19th**
 
-**Have dones**:
-* Add toolbar and many icons of actions. So does the status buffer below. It means when you want to show some message, you can simply add this in your function:
-```cpp
-statusBar()->showMessage("this is the message", 2000) // last 2 sec
-```
-![image_1cbhn7pj61phdsa9a8vh3t19o5c.png-35.8kB][4]
+进展缓慢，如果验收的时候出现了什么bug或者丢人现眼的情况，
+助教们一定要高呼：
+# 理解万岁！！理解万岁！！
 
-  [4]: http://static.zybuluo.com/EtoDemerzel/j2kkxzd9e90io3x5lokiae6j/image_1cbhn7pj61phdsa9a8vh3t19o5c.png
+**To-do**:
+- 使文字编辑功能支持TNT(TNT是著名日本企业家罗永浩先生率先提出的Touch and Talk技术的简称），用户只需要把手电脑屏幕上，说“复制”“粘贴””查找""光标左移"等就可以实现编辑功能，当然，这需要罗先生提供我们API。
+- 编辑框支持水晶球功能，可以一键编辑多个文本框。把每个文件都存成一样。这么做的意义是什么？问罗先生。理解万岁。
 
-As the pic shows above, when I put my cursor in the icon of "New", there will be a tool tip around it and a status tip at the botton of the window.
-
- 
-* Most of the actions of the menu/toolbar are not connected with any slots. For example *Copy/Paste/Print etc*.
-* The first step of cursor movement.(done by DaoXu Sheng)
-
-**To do**:
-* **File operations**: Only the file-openning operation done.
-* **Text operations**. *Select\Find\substitute\Redo\Undo etc.*
-* **ScrollArea**.

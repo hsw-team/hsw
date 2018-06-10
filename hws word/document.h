@@ -38,8 +38,9 @@ public:
     Row *row_ptr;
     int col;
     int row_cnt = 0;
-    int cur_height=0;
+    int cur_height = 0;
     int chi_cnt = 0;
+    int eng_cnt = 0;
 
 };
 

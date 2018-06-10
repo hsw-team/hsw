@@ -49,6 +49,8 @@ void replaceDialog:: textChangeSlot(){
         ui->replaceButton->setEnabled(true);
         ui->replaceAllButton->setEnabled(true);
     }
+
+
 }
 
 // 查找按钮

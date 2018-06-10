@@ -17,7 +17,7 @@ class findDialog : public QDialog
 public:
     explicit findDialog(QWidget *parent = 0);
     ~findDialog();
-private slots:    
+private slots:
     void on_pushButton_2_clicked(); // 点击 Cancel
 
     void on_findButton_clicked(); // 点击 Find Next

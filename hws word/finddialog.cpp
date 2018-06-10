@@ -2,8 +2,6 @@
 #include "mainwindow.h"
 #include "ui_finddialog.h"
 
-
-
 findDialog::findDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::findDialog)
@@ -14,8 +12,6 @@ findDialog::findDialog(QWidget *parent) :
     setWindowTitle("Find");
 
     connect(ui->lineEdit,SIGNAL(textChanged(QString)),this,SLOT(textChangeSlot())); //lineEdit中输入，则触发查找键有效
-
-
 }
 
 findDialog::~findDialog()

@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+QT       += printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -29,7 +30,9 @@ SOURCES += \
     document.cpp \
     finddialog.cpp \
     blockshadow.cpp \
-    replacedialog.cpp
+    replacedialog.cpp \
+    file_process.cpp \
+    text_edit.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -43,6 +46,7 @@ FORMS += \
     replacedialog.ui
 
 RESOURCES += \
-    icons.qrc
+    icons.qrc \
+    interface.qrc
 
 RC_ICONS = "icons/logo.ico"

@@ -53,7 +53,7 @@ void Document::insert_text(const char *s)
     //将当前行光标后字符后挪 s_len 长度
     for(int i = cursor.row_ptr->cur_len - 1; i >= cursor.col; i--)
     {
-        if(cursor.row_ptr->cur_len + s_len > cursor.row_ptr->max_len)
+        while(cursor.row_ptr->cur_len + s_len > cursor.row_ptr->max_len)
            cursor.row_ptr->expand_block();
         cursor.row_ptr->row_text[i + s_len] = cursor.row_ptr->row_text[i];
     }
@@ -118,7 +118,7 @@ bool Document::save_file(char *s)
     QFile outputFile(s);
     QString line_text;
     Row *temp = this->first_row;
-    if(outputFile.open(QIODevice::WriteOnly | QIODevice::ReadWrite | QIODevice::Text)){
+    if(outputFile.open(QIODevice::WriteOnly | QIODevice::Text)){
         QTextStream out(&outputFile);
         out.setCodec(QTextCodec::codecForName("gbk"));
         while(temp){
@@ -142,7 +142,11 @@ void Document::cursor_left()
     qDebug() << "@Cursor Left";
     if(cursor.col == 0){
         if(cursor.row_ptr->prev_row) {
+            qDebug() << "@@@@@@@@@@@@@@@" << cursor.row_ptr;
+            qDebug() << "@@@@@@@@@@@@@@@" << cursor.row_ptr->prev_row;
             cursor.row_ptr = cursor.row_ptr->prev_row;
+            qDebug() << "@@@@@@@@@@@@@@@" << cursor.row_ptr;
+            qDebug() << "@@@@@@@@@@@@@@@" << cursor.row_ptr->prev_row;
             cursor.col = cursor.row_ptr->cur_len;
             cursor.row_cnt--;
         }
@@ -217,18 +221,12 @@ void Document::cursor_down()
 void Document::cursor_home()
 {
     qDebug() << "@Cursor home";
-    cursor.row_ptr = first_row;
     cursor.col = 0;
-    cursor.row_cnt = 0;
 }
 
 void Document::cursor_end()
 {
     qDebug() << "@Cursor end";
-    while(cursor.row_ptr->next_row){
-        cursor.row_ptr = cursor.row_ptr->next_row;
-        cursor.row_cnt++;
-    }
     cursor.col = cursor.row_ptr->cur_len;
 }
 

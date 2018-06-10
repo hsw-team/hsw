@@ -1,0 +1,31 @@
+QScrollBar:vertical {
+    width:20px;
+}
+
+QScrollBar:horizontal {
+    height:20px;
+}
+
+QScrollBar::handle:vertical {
+    width:20px;
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #B8B8B8, stop:1 #D6D6D6);
+}
+
+QScrollBar::handle:horizontal {
+    height:20px;
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #B8B8B8, stop:1 #D6D6D6);
+}
+
+QScrollBar::handle:vertical:hover {
+    width:20px;
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #454648, stop:1 #7A7A7A);
+}
+
+QScrollBar::handle:horizontal:hover {
+    height:20px;
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #454648, stop:1 #7A7A7A);
+}
+
+QScrollArea {
+    border: 0px ;
+}

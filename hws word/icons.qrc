@@ -26,5 +26,9 @@
         <file>icons/I.png</file>
         <file>icons/logo.ico</file>
         <file>icons/blockshadow.png</file>
+        <file>icons/find.png</file>
+        <file>icons/print.png</file>
+        <file>icons/select.png</file>
+        <file>icons/replace.png</file>
     </qresource>
 </RCC>
